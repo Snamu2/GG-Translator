@@ -1,0 +1,24 @@
+{
+  "name": "gg-translator",
+  "version": "1.0.0",
+  "description": "Multi-Translation (Experimental Version)",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Snamu",
+  "license": "ISC",
+  "dependencies": {
+    "@google/generative-ai": "^0.14.1",
+    "dotenv": "^16.4.5",
+    "ejs": "^3.1.10",
+    "express": "^4.19.2",
+    "express-session": "^1.18.0",
+    "helmet": "^7.1.0",
+    "method-override": "^3.0.0",
+    "mongodb": "^6.8.0",
+    "openai": "^4.52.7",
+    "socket.io": "^4.7.5",
+    "uuid": "^10.0.0"
+  }
+}

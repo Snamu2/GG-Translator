@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication Page</title>
+    <link href="css/nav.css" rel="stylesheet">
+    <link href="css/modal.css" rel="stylesheet">
+    <link href="css/auth.css" rel="stylesheet">
+</head>
+<body class="grey-bg">
+
+  <div class="nav">
+    <a class="logo">GG Translator</a>
+  </div>
+
+  <div class="container">
+    <h1>Enter Authentication Code</h1>
+    <div class="auth-box white-bg">
+      <input type="text" id="authCodeInput" placeholder="Enter Auth Code... XXXXXX">
+      <button id="submitAuthCode">Submit</button>
+    </div>
+  </div>
+
+  <%- include('modal.ejs') %>
+
+  <script src="js/modal.js"></script>
+  <script src="js/auth.js"></script>
+</body>
+</html>

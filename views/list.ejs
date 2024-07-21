@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link href="css/main.css" rel="stylesheet">
+</head>
+<body class="grey-bg">
+
+  <%- include('nav.ejs') %>
+
+  <div class="white-bg">
+    <% for (let i = 0; i < 글목록.length; i++) { %>
+      <div class="list-box">
+        <h4>
+          <a href="/detail/<%= 글목록[i]._id %>">
+            <%= 글목록[i].title %>
+          </a>
+          <a href="/edit/<%= 글목록[i]._id %>">✏️</a>
+          <span class="delete" data-id="<%= 글목록[i]._id %>" data-title="<%= 글목록[i].title %>" data-content="<%= 글목록[i].content %>">🗑️</span>
+        </h4>
+        <p>글내용임</p>
+      </div>
+    <% } %>
+
+  </div>
+
+  <script nonce='<%= nonce %>'>
+    for (let i = 0; i < '<%= 글목록.length %>'; i++){
+      document.querySelectorAll('.delete')[i].addEventListener('click', function(e){
+        fetch(`/delete?docid=${e.target.dataset.id}&doctitle=${e.target.dataset.title}&doccontent=${e.target.dataset.content}`, {
+          method : 'DELETE'
+        })
+        .then((r)=>{
+          if(r.status == 200) {
+            return r.text()
+          } else {
+            //서버가 에러코드전송시 실행할코드
+            alert('에러남')
+          }
+        })
+        .then((r)=>{
+          //성공시 실행할코드
+          console.log(r)
+          e.target.parentElement.parentElement.style.display = 'none'
+        }).catch((e)=>{
+          //인터넷문제 등으로 실패시 실행할코드
+          console.log(e)
+          alert('에러남')
+        })
+      })
+    }
+    
+
+    // URL parameter
+    // server -> get /abc/:id      user -> fetch('/abc/123123')
+    // req.params
+
+    // query string
+    // server -> get /abc      user -> fetch('/abc?데이터이름=데이터값&데이터이름=데이터값')
+    // req.query
+  </script>
+
+</body>
+</html>

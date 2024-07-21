@@ -1,0 +1,48 @@
+/* Style for the button container */
+.toggle-button {
+  display: inline-block;
+  width: 60px;
+  height: 30px;
+  background-color: #ccc;
+  border-radius: 15px;
+  position: relative;
+  cursor: pointer;
+}
+
+/* Style for the switch inside the button */
+.switch {
+  width: 28px;
+  height: 28px;
+  background-color: #fff;
+  border-radius: 50%;
+  position: absolute;
+  top: 1px;
+  transition: transform 0.3s;
+}
+
+/* Initial state of the switch (off) */
+.toggle-button.off .switch {
+  transform: translateX(0);
+  transition: transform 0.3s, background-color 0.3s;
+}
+
+/* Toggled state of the switch (on) */
+.toggle-button.on .switch {
+  transform: translateX(30px);
+  background-color: #00ff00;
+  transition: transform 0.3s, background-color 0.3s;
+}
+
+.gpt-mode {
+  color: #333;
+  font-weight: bold;
+  font-size: 16px;
+  margin-right: 10px;
+}
+
+.gemini-mode {
+  color: #333;
+  font-weight: bold;
+  font-size: 16px;
+  margin-right: 10px;
+}

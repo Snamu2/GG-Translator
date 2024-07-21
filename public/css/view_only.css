@@ -1,0 +1,145 @@
+.montserrat-font-Black {
+  font-family: "Montserrat", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 900; /* Use a value from 100 to 900 */
+  font-style: normal;
+}
+.montserrat-font-SemiBold {
+  font-family: "Montserrat", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 600; /* Use a value from 100 to 900 */
+  font-style: normal;
+}
+body {
+  font-family: "Noto Sans", "Noto Sans KR", "Noto Sans JP", "Noto Sans SC", "Noto Sans TC", "Noto Sans Thai", "Noto Sans Devanagari", "Noto Sans Arabic", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400; /* Use a value from 100 to 900 */
+  font-style: normal;
+  font-variation-settings:
+    "wdth" 100;
+  
+  background-color: #f0f4f8;
+  margin-bottom: 25px;
+}
+
+.dragging {
+  opacity: 0.5;
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+.sortable-ghost {
+  opacity: 0.65 !important;
+  background-color: #e0e0e0 !important;
+  border: 1.75px dashed #ccc;
+}
+
+.container {
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  transition: transform 0.5s ease, opacity 0.5s ease, all 0.5s ease;
+}
+
+h2 {
+  color: #333;
+  font-weight: bold;
+}
+
+button {
+  transition: background-color 0.3s ease, transform 0.3s ease !important;
+  margin: 7px;
+}
+
+button:hover {
+  background-color: #007bff !important;
+  color: #fff;
+  transform: scale(1.1) !important;
+}
+
+button.active {
+  background-color: #007bff !important;
+  color: #fff !important;
+  transform: scale(1.1) !important;
+}
+
+#translation-container {
+  position: relative;
+  padding-top: 45px;
+}
+
+#translation-container.grid {
+  display: flex !important;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding-top: 60px;
+}
+
+#translation-container.grid .language-section {
+  width: calc(50% - 10px);
+  margin: 5px;
+  flex: 1 1 calc(50% - 20px);
+}
+
+.language-section {
+  display: none;
+  opacity: 0;
+  transition: opacity 0.5s ease, background-color 0.3s ease, transform 0.3s ease, all 0.5s ease !important;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  flex: 1 1 calc(100% - 20px);
+}
+
+.language-section:hover {
+  background-color: #0000001a;
+  transform: scale(1.025) !important;
+  transition: background-color 0.3s ease, transform 0.3s ease !important;
+  cursor: grab;
+}
+
+.language-section.active {
+  display: block;
+  opacity: 1;
+}
+
+#buttons-container {
+  background-color: transparent;
+  border: none;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.btn-transparent {
+  background-color: transparent;
+  border: none;
+  position: relative;
+  cursor: pointer;
+  margin: initial;
+  margin-left: 7px;
+  padding: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#toggle-grid.grid-active {
+  background-color: #007bff !important;
+  color: #fff;
+}
+
+h3 {
+  color: #555;
+}
+
+p {
+  font-size: 1.1em;
+  color: #666;
+}

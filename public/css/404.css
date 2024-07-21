@@ -1,0 +1,167 @@
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f4;
+  margin: 0;
+}
+
+canvas {
+  display: none;
+  position: absolute;
+  top: -30px;
+  left: -30px;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  text-align: center;
+}
+
+.grey-bg {
+  background: #eee;
+}
+
+.white-bg {
+  background: white;
+  margin: 20px 0;
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  padding: 30px;
+}
+
+.error-box h1 {
+  font-size: 48px;
+  margin: 20px 0;
+  color: #333;
+  user-select: none;
+}
+
+.error-box p {
+  font-size: 16px;
+  margin: 10px;
+  color: grey;
+  user-select: none;
+}
+
+.go-home {
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: #007BFF;
+  color: white;
+  border-radius: 5px;
+  text-decoration: none;
+  transition: background-color 0.3s;
+  position: relative;
+  z-index: 2;
+  user-select: none;
+}
+
+.go-home:hover {
+  background-color: #0056b3;
+}
+
+.error-animation {
+  position: relative;
+  height: 150px;
+}
+
+.planet {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 100px;
+  background-color: #eee;
+  border-radius: 50%;
+  background: radial-gradient(circle, #eee, #ccc);
+  overflow: hidden;
+}
+
+.planet::before {
+  content: "";
+  position: absolute;
+  top: 10%;
+  left: 10%;
+  width: 20px;
+  height: 20px;
+  background-color: #bbb;
+  border-radius: 50%;
+}
+
+.planet::after {
+  content: "";
+  position: absolute;
+  bottom: 15%;
+  right: 15%;
+  width: 30px;
+  height: 30px;
+  background-color: #bbb;
+  border-radius: 50%;
+}
+
+.ufo {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 40px;
+  animation: ufoMove 5s infinite;
+  cursor: pointer;
+}
+
+.ufo-body {
+  width: 100%;
+  height: 100%;
+  background-color: #007BFF;
+  border-radius: 50% 50% 0 0;
+  border-bottom: 10px solid #0056b3;
+  position: relative;
+}
+
+.ufo-body::before {
+  content: "";
+  position: absolute;
+  top: 10%;
+  left: 10%;
+  width: 10px;
+  height: 10px;
+  background-color: #fff;
+  border-radius: 50%;
+}
+
+.ufo-body::after {
+  content: "";
+  position: absolute;
+  top: 10%;
+  right: 10%;
+  width: 10px;
+  height: 10px;
+  background-color: #fff;
+  border-radius: 50%;
+}
+
+.ufo-light {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%) translateY(100%);
+  width: 120px;
+  height: 60px;
+  background-color: rgba(255, 255, 102, 0.5);
+  border-radius: 50%;
+  z-index: -1;
+  box-shadow: 0 0 30px 10px rgba(255, 255, 102, 0.4);
+}
+
+@keyframes ufoMove {
+  0%, 100% {
+    transform: translateX(-50%) translateY(0);
+  }
+  50% {
+    transform: translateX(-50%) translateY(-20px);
+  }
+}

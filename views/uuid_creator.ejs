@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UUID Creator</title>
+    <link href="/css/modal.css" rel="stylesheet">
+    <link href="/css/uuid_creator.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <h1>UUID / authCode Creator</h1>
+        <input type="text" id="nameInput" placeholder="Enter Name">
+        <button id="generateBtn">Generate UUID</button>
+        <button id="checkDuplicateBtn">Check for Duplicates</button>
+        <div id="authCodeDisplay"></div>
+    </div>
+
+    <%- include('modal.ejs') %>
+    
+    <script src="/js/modal.js"></script>
+    <script src="/js/uuid_creator.js"></script>
+</body>
+</html>

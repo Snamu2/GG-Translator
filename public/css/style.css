@@ -1,0 +1,232 @@
+/* .edit_box_active {
+    
+} */
+#txtOutput {
+    word-wrap: break-word;
+}
+
+.montserrat-font-Medium {
+  font-family: "Montserrat", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 500; /* Use a value from 100 to 900 */
+  font-style: normal;
+}
+.montserrat-font-SemiBold {
+  font-family: "Montserrat", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 600; /* Use a value from 100 to 900 */
+  font-style: normal;
+}
+body {
+  font-family: "Noto Sans", "Noto Sans KR", "Noto Sans JP", "Noto Sans SC", "Noto Sans TC", "Noto Sans Thai", "Noto Sans Devanagari", "Noto Sans Arabic", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400; /* Use a value from 100 to 900 */
+  font-style: normal;
+  font-variation-settings:
+    "wdth" 100;
+  
+  margin: 0;
+  background: #eee;
+}
+.nav {
+  height: 56px;
+  display: flex;
+  padding: 15px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  background : white;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+ul.nav {
+  height: initial;
+}
+.nav a {
+  margin-right: 10px;
+  text-decoration: none;
+  color: #007BFF;
+  transition: color 0.3s;
+}
+.nav a:hover {
+  color: #0056b3;
+}
+#start {
+  display: flex;
+  flex-direction: row;
+}
+#end {
+  min-width: 170px;
+  display: flex;
+  flex-direction: row;
+  flex: none;
+  align-items: center;
+  justify-content: flex-end;
+}
+.logo {
+  font-weight: bold;
+  flex-grow: 1;
+  position: relative;
+}
+.base {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.anaglyph {
+  position: relative;
+  display: inline-block;
+  color: white;
+  animation: glitch 4s infinite;
+}
+.anaglyph::before,
+.anaglyph::after {
+  content: 'GG';
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  opacity: 0;
+}
+.anaglyph::before {
+  color: red;
+  animation: glitch-red 4s infinite;
+}
+.anaglyph::after {
+  color: cyan;
+  animation: glitch-cyan 4s infinite;
+}
+
+@keyframes glitch {
+  0%, 100% {
+      opacity: 1;
+  }
+  10%, 90% {
+      opacity: 0.8;
+  }
+  20%, 80% {
+      opacity: 0.6;
+  }
+  30%, 70% {
+      opacity: 0.4;
+  }
+  40%, 60% {
+      opacity: 0.2;
+  }
+  50% {
+      opacity: 0;
+  }
+}
+
+@keyframes glitch-red {
+  0%, 100% {
+      opacity: 0;
+      transform: translate(0, 0);
+  }
+  10%, 90% {
+      opacity: 1;
+      transform: translate(-2px, -2px);
+  }
+  20%, 80% {
+      opacity: 0.8;
+      transform: translate(-3px, -3px);
+  }
+  30%, 70% {
+      opacity: 0.6;
+      transform: translate(-1px, -1px);
+  }
+  40%, 60% {
+      opacity: 0.4;
+      transform: translate(-4px, -4px);
+  }
+  50% {
+      opacity: 0;
+      transform: translate(-2px, -2px);
+  }
+}
+
+@keyframes glitch-cyan {
+  0%, 100% {
+      opacity: 0;
+      transform: translate(0, 0);
+  }
+  10%, 90% {
+      opacity: 1;
+      transform: translate(2px, 2px);
+  }
+  20%, 80% {
+      opacity: 0.8;
+      transform: translate(3px, 3px);
+  }
+  30%, 70% {
+      opacity: 0.6;
+      transform: translate(1px, 1px);
+  }
+  40%, 60% {
+      opacity: 0.4;
+      transform: translate(4px, 4px);
+  }
+  50% {
+      opacity: 0;
+      transform: translate(2px, 2px);
+  }
+}
+
+.container {
+  max-width: 800px;
+  margin: 20px auto;
+  padding: 20px;
+  background: white;
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.edit_box_active {
+  border: 1px solid #ccc;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.edit_box {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  resize: none;
+}
+
+.bg-body-secondary {
+  background-color: #f7f7f7;
+}
+
+.text-body-secondary {
+  color: #666;
+}
+
+.grey-bg {
+  background: #eee;
+}
+.white-bg {
+  background: white;
+  /* margin: 20px; */
+  border-radius: 5px;
+}
+
+footer {
+  background: white;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  padding: 20px 0;
+}
+
+.nav-link {
+  margin-right: 10px!important;
+  margin-left: 10px;
+}
+
+textarea {
+  resize: none;
+  width: 100%;
+}
+textarea::placeholder {
+  font-style: italic;
+  opacity: 60%;
+}
