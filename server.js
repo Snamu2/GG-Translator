@@ -39,6 +39,15 @@ app.use(
   })
 );
 
+(function() {
+  const originalLog = console.log;
+  const prefix = "\x1b[1m\x1b[36m[GG]\x1b[0m";
+
+  console.log = function(...args) {
+    originalLog.apply(console, [prefix, ...args]);
+  };
+})();
+
 // const openai = new OpenAI({
 //     apiKey: process.env.OPENAI_API_KEY
 // });
@@ -398,7 +407,7 @@ app.post('/', (req, res) => {
     let model = req.query.model;
     // console.log(param);
     // console.log(SetLanguage);
-    console.log(model);
+    // console.log(model);
     if (model === 'gpt-3.5-turbo' || model === 'gpt-4' || model === 'gemini-1.5-flash-latest') {
         if (model === 'gpt-4') {
             selectedModel = model;

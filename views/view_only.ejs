@@ -68,8 +68,8 @@
         <% languages.forEach(function(language) { %>
             <div id="<%= language.code %>" class="language-section">
                 <h3><%= language.name %></h3>
-                <p>
-                    <!-- <%= language.name %> translation will be displayed here. -->
+                <p id="translation-<%= language.code %>">
+                    <%= language.name %> translation will be displayed here.
                     <% AIResult.split('\n').forEach(function(line) {
                         if (line.toLowerCase().startsWith(language.code)) {
                             // 언어 코드와 콜론을 제거한 후 내용만 출력

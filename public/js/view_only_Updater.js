@@ -28,37 +28,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const activeLanguages = JSON.parse(localStorage.getItem('activeLanguages')) || [];
 
-    const container = document.getElementById('translation-container');
-    
-    // 새로운 섹션을 추가하거나 기존 섹션을 업데이트
+    // 기존 섹션을 업데이트
     languages.forEach(function(language) {
-      let section = document.getElementById(language.code);
-      if (!section) {
-        section = document.createElement('div');
-        section.id = language.code;
-        section.className = 'language-section';
-        const title = document.createElement('h3');
-        title.innerText = language.name;
-        section.appendChild(title);
-        container.appendChild(section);
-      }
-
-      const paragraph = document.createElement('p');
-      AIResult.split('\n').forEach(function(line) {
-        if (line.toLowerCase().startsWith(language.code)) {
-          const content = line.split(': ')[1] || 'No translation available';
+      const section = document.getElementById(language.code);
+      if (section) {
+        const paragraph = document.getElementById(`translation-${language.code}`);
+        if (paragraph) {
+          let content = 'No translation available';
+          AIResult.split('\n').forEach(function(line) {
+            if (line.toLowerCase().startsWith(language.code)) {
+              content = line.split(': ')[1] || content;
+            }
+          });
           paragraph.innerText = content;
-        }
-      });
-      section.innerHTML = '';
-      section.appendChild(paragraph);
 
-      if (activeLanguages.includes(language.code)) {
-        section.style.display = 'block';
-        section.classList.add('active');
-      } else {
-        section.style.display = 'none';
-        section.classList.remove('active');
+          // Show or hide the section based on activeLanguages
+          if (activeLanguages.includes(language.code)) {
+            section.style.display = 'block';
+            section.classList.add('active');
+          } else {
+            section.style.display = 'none';
+            section.classList.remove('active');
+          }
+        }
       }
     });
 
