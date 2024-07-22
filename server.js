@@ -500,6 +500,9 @@ app.get('/view_only', (req, res) => {
     res.render('view_only.ejs', { AIResult: 'No results available' });
   }
 });
+app.get('/live', (req, res) => {
+  res.render('live_translations.ejs', { AIResult: output });
+});
 
 // 클라이언트에게 번역 결과를 실시간으로 전송
 io.on('connection', (socket) => {
