@@ -501,7 +501,7 @@ app.get('/view_only', (req, res) => {
   }
 });
 app.get('/live', (req, res) => {
-  res.render('live_translations.ejs', { AIResult: output });
+  res.render('live_translations.ejs');
 });
 
 // 클라이언트에게 번역 결과를 실시간으로 전송
