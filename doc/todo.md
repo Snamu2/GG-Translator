@@ -1,11 +1,15 @@
 tts / copy
-
-Discord with bot
+shiny game / spin discord
+Discord with bot (function translateText 손보기 w.chat)
 
 
 flutter
 
 firebase
+google cloud hosting
+
+
+modal
 
 # ToDo
 

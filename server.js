@@ -500,9 +500,6 @@ app.get('/view_only', (req, res) => {
     res.render('view_only.ejs', { AIResult: 'No results available' });
   }
 });
-app.get('/live', (req, res) => {
-  res.render('live_translations.ejs');
-});
 
 // 클라이언트에게 번역 결과를 실시간으로 전송
 io.on('connection', (socket) => {
@@ -540,6 +537,137 @@ io.on('connection', (socket) => {
     console.log('Client disconnected');
   });
 });
+
+app.get('/app/discord/GGT', (req, res) => {
+  res.redirect(process.env.DISCORD_BOT_OAUTH2_URL)
+});
+
+// For Discord App <==
+const { Client, GatewayIntentBits, Events, REST, Routes } = require('discord.js');
+
+const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
+
+// 슬래시 명령어 등록
+async function registerCommands() {
+  const commands = [
+    {
+      name: 'translate',
+      description: 'Translate a replied message',
+      options: [
+        {
+          type: 3, // STRING type
+          name: 'language',
+          description: 'Target language for translation',
+          required: true,
+        },
+      ],
+    },
+  ];
+
+  const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
+
+  try {
+    console.log('Started refreshing application (/) commands.');
+
+    await rest.put(Routes.applicationCommands(process.env.CLIENT_ID), {
+      body: commands,
+    });
+
+    console.log('Successfully reloaded application (/) commands.');
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+client.once(Events.ClientReady, () => {
+  console.log(`Logged in as ${client.user.tag}!`);
+  // 슬래시 명령어 등록
+  registerCommands();
+});
+
+// 슬래시 명령어와 상호작용 처리
+client.on(Events.InteractionCreate, async (interaction) => {
+  if (!interaction.isCommand()) return;
+
+  const { commandName, options } = interaction;
+
+  if (commandName === 'translate') {
+    const language = options.getString('language');
+
+    if (interaction.message.reference) {
+      try {
+        // 답글 메시지 가져오기
+        const replyMessage = await interaction.channel.messages.fetch(interaction.message.reference.messageId);
+
+        // 원본 메시지 삭제
+        await interaction.message.delete();
+
+        // 번역 API 호출
+        const translatedText = await translateText(replyMessage.content, language);
+
+        // 응답 메시지를 사용자에게만 보이도록 전송
+        await interaction.reply({
+          content: `Translation Result: ${translatedText}`,
+          ephemeral: true,
+        });
+
+      } catch (error) {
+        console.error('Error handling command:', error);
+        await interaction.reply({
+          content: 'An error occurred during translation.',
+          ephemeral: true,
+        });
+      }
+    } else {
+      await interaction.reply({
+        content: 'You need to select the message as a reply.',
+        ephemeral: true,
+      });
+    }
+  }
+});
+
+async function translateText(text, targetLanguage) {
+  if (model === 'gemini-1.5-flash-latest') {
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-1.5-flash-latest',
+      systemInstruction: "You are the best translator in the world. Please translate what you Languages correctly. Only send out the translated results. Detect Language -> \n\n" + targetLanguage + "\n\nBe sure to follow this form. Please maintain the fixed order.",
+    });
+
+    try {
+      const result = await model.generateContent({
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              {
+                text: text,
+              }
+            ],
+          }
+        ],
+        generationConfig: {
+          maxOutputTokens: 256,
+          temperature: 0.7,
+        },
+      });
+
+      const response = result.response;
+      const translatedText = response.text();
+      return translatedText;
+    } catch (error) {
+      console.error('Error generating content:', error);
+      throw error;
+    }
+  } else {
+    throw new Error('Invalid model');
+  }
+}
+
+// 봇 로그인
+client.login(process.env.DISCORD_TOKEN);
+
+// ==>
 
 
 // const moment = require('moment');

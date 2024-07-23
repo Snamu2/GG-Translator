@@ -83,6 +83,9 @@ document.querySelector('#Clear').addEventListener('click', () => {
 document.querySelector('#viewOnlyBtn').addEventListener('click', () => {
     window.open('/view_only', '_blank');
 })
+document.querySelector('#discord-app').addEventListener('click', () => {
+    window.open('/app/discord/GGT', '_blank');
+})
 
 
 var txtArea = document.getElementById("txtSource");

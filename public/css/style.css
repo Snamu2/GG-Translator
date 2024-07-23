@@ -50,6 +50,10 @@ ul.nav {
 .nav a:hover {
   color: #0056b3;
 }
+a#discord-app svg {
+  margin-right: 4px;
+  color: #5468ff;
+}
 #start {
   display: flex;
   flex-direction: row;
