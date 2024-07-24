@@ -10,6 +10,8 @@ const OpenAI = require('openai');
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const { MongoClient, ObjectId } = require('mongodb');
 const methodOverride = require('method-override')
+const fs = require('fs');
+const path = require('path');
 var session = require('express-session')
 require('dotenv').config();
 app.use(methodOverride('_method'))
@@ -547,18 +549,41 @@ const { Client, GatewayIntentBits, Events, REST, Routes } = require('discord.js'
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 
-// 슬래시 명령어 등록
+const quotesFilePath = path.join(__dirname, 'public', 'txt', 'quotes.txt');
+
+const LANGUAGES = [
+  { name: 'Korean (KOR)', value: 'KOR' },
+  { name: 'English (ENG)', value: 'ENG' },
+  { name: 'Japanese (JPN)', value: 'JPN' },
+  { name: 'Chinese Simplified (CHS)', value: 'CHS' },
+  { name: 'Chinese Traditional (CHT)', value: 'CHT' },
+  { name: 'Vietnamese (VIE)', value: 'VIE' },
+  { name: 'Indian (IND)', value: 'IND' },
+  { name: 'Thai (THA)', value: 'THA' },
+  { name: 'German (DEU)', value: 'DEU' },
+  { name: 'Russian (RUS)', value: 'RUS' },
+  { name: 'Spanish (SPA)', value: 'SPA' },
+  { name: 'Italian (ITA)', value: 'ITA' },
+  { name: 'French (FRA)', value: 'FRA' },
+  { name: 'Hindi (HIN)', value: 'HIN' },
+  { name: 'Arabic (ARA)', value: 'ARA' },
+  { name: 'Portuguese (POR)', value: 'POR' },
+  { name: 'Turkish (TUR)', value: 'TUR' },
+];
+
+// 📜 Register Slash Commands
 async function registerCommands() {
   const commands = [
     {
       name: 'translate',
-      description: 'Translate a replied message',
+      description: 'Translate a replied message 🌐',
       options: [
         {
           type: 3, // STRING type
           name: 'language',
-          description: 'Target language for translation',
+          description: 'Target language for translation 🔄',
           required: true,
+          choices: LANGUAGES,
         },
       ],
     },
@@ -579,33 +604,59 @@ async function registerCommands() {
   }
 }
 
+// 🌟 Bot Ready Event
 client.once(Events.ClientReady, () => {
   console.log(`Logged in as ${client.user.tag}!`);
-  // 슬래시 명령어 등록
+  // 📜 Register Slash Commands
   registerCommands();
 });
 
-// 슬래시 명령어와 상호작용 처리
+// 🛠️ Slash Command Interaction Handler
 client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isCommand()) return;
+  if (!interaction.channel || interaction.channel.type === 'DM') {
+    await interaction.reply({
+      content: 'Currently, Cannot use commands in DM. ❌',
+      ephemeral: true,
+    });
+    return;
+  }
 
   const { commandName, options } = interaction;
 
   if (commandName === 'translate') {
     const language = options.getString('language');
 
-    if (interaction.message.reference) {
+    if (!LANGUAGES.some(lang => lang.value === language)) {
+      await interaction.message.delete();
+      await interaction.reply({
+        content: 'Unsupported language. Please check available languages. 📜',
+        ephemeral: true,
+      });
+      return;
+    }
+
+    if (interaction.message && interaction.message.reference) {
       try {
-        // 답글 메시지 가져오기
+        // 📨 Fetch replied message
         const replyMessage = await interaction.channel.messages.fetch(interaction.message.reference.messageId);
 
-        // 원본 메시지 삭제
+        if (!replyMessage || !replyMessage.content) {
+          await interaction.message.delete();
+          await interaction.reply({
+            content: 'The replied message is empty or unavailable. 🛑',
+            ephemeral: true,
+          });
+          return;
+        }
+
+        // 🗑️ Delete original message
         await interaction.message.delete();
 
-        // 번역 API 호출
+        // 🌐 Call Translation API
         const translatedText = await translateText(replyMessage.content, language);
 
-        // 응답 메시지를 사용자에게만 보이도록 전송
+        // 💬 Send translated result
         await interaction.reply({
           content: `Translation Result: ${translatedText}`,
           ephemeral: true,
@@ -614,28 +665,28 @@ client.on(Events.InteractionCreate, async (interaction) => {
       } catch (error) {
         console.error('Error handling command:', error);
         await interaction.reply({
-          content: 'An error occurred during translation.',
+          content: 'An error occurred during translation. ❌',
           ephemeral: true,
         });
       }
     } else {
       await interaction.reply({
-        content: 'You need to select the message as a reply.',
+        content: 'You need to select the message as a reply. 📩',
         ephemeral: true,
       });
     }
   }
 });
 
+// 🔄 Translation Function
 async function translateText(text, targetLanguage) {
-  if (model === 'gemini-1.5-flash-latest') {
     const model = genAI.getGenerativeModel({
       model: 'gemini-1.5-flash-latest',
-      systemInstruction: "You are the best translator in the world. Please translate what you Languages correctly. Only send out the translated results. Detect Language -> \n\n" + targetLanguage + "\n\nBe sure to follow this form. Please maintain the fixed order.",
+      systemInstruction: "You are the best translator in the world. Please translate what you Languages correctly. Only send out the translated results. Detect Language -> " + targetLanguage + "\n\nBe sure to follow this form. Please maintain the fixed order.",
     });
 
     try {
-      const result = await model.generateContent({
+      model.generateContent({
         contents: [
           {
             role: 'user',
@@ -650,19 +701,43 @@ async function translateText(text, targetLanguage) {
           maxOutputTokens: 256,
           temperature: 0.7,
         },
-      });
-
-      const response = result.response;
-      const translatedText = response.text();
-      return translatedText;
+      }).then(result => {
+          const response = result.response;
+          const text = response.text();
+          return text;
+        })
     } catch (error) {
       console.error('Error generating content:', error);
       throw error;
     }
-  } else {
-    throw new Error('Invalid model');
-  }
 }
+
+// 📚 Read Quotes File
+let quotes = [];
+
+fs.readFile(quotesFilePath, 'utf8', (err, data) => {
+  if (err) {
+    console.error('An error occurred while reading the quotes file:', err);
+    return;
+  }
+  quotes = data.split('\n').filter(quote => quote.trim() !== '');
+});
+
+// 📝 Respond to Mentions with Quotes
+client.on('messageCreate', async (message) => {
+  if (message.channel.type === 'DM') {
+    // DM messages are ignored
+    return;
+  }
+  if (message.mentions.has(client.user)) {
+    if (quotes.length === 0) {
+      await message.reply('An error occurred while fetching the quotes. ❌');
+      return;
+    }
+    const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+    await message.reply(randomQuote);
+  }
+});
 
 // 봇 로그인
 client.login(process.env.DISCORD_TOKEN);

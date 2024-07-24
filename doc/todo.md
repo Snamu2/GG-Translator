@@ -1,6 +1,6 @@
 tts / copy
 shiny game / spin discord
-Discord with bot (function translateText 손보기 w.chat)
+디코 앱 번역 오류
 
 
 flutter
