@@ -1,4 +1,4 @@
-# Development period (Experimental Version)
+# ~~Development period (Experimental Version)~~
 2023-10-16\
 2023-10-17\
 2023-10-18\
@@ -11,6 +11,8 @@
 2023-10-27\
 2024-07-15 @Google, Jocoding 화이팅!\
 2024-07-16
+아 모르겠다.
+...
 
 # Info
 (gpt4 임시 폐쇄)

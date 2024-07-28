@@ -1,13 +1,14 @@
 tts / copy
 shiny game / spin discord
-디코 앱 번역 오류
+~~Update mentions & commands, Add log For Discord App~~   기능: 멘션/명령어/앱메뉴 Application Commands
 
 
-flutter
+~~flutter~~(Someday... For detail & discord app)
 
 firebase
 google cloud hosting
 
+(DB recording)
 
 modal
 

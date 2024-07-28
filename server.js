@@ -545,7 +545,7 @@ app.get('/app/discord/GGT', (req, res) => {
 });
 
 // For Discord App <==
-const { Client, GatewayIntentBits, Events, REST, Routes } = require('discord.js');
+const { Client, GatewayIntentBits, Events, REST, Routes, SlashCommandBuilder, ContextMenuCommandBuilder, ApplicationCommandType, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, DiscordjsErrorCodes, ComponentType } = require('discord.js');
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 
@@ -572,25 +572,28 @@ const LANGUAGES = [
 ];
 
 // 📜 Register Slash Commands
+const commands = [
+  new SlashCommandBuilder()
+    .setName('translate')
+    .setDescription('Translate the Text 🌐')
+    .addStringOption(option =>
+      option
+        .setName('language')
+        .setDescription('Target language for translation 🔄')
+        .setRequired(true)
+        .addChoices(...LANGUAGES)
+    )
+    .addStringOption(option =>
+      option
+        .setName('text')
+        .setDescription('Input Text')
+        .setRequired(true)
+    ),
+];
+
+const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
+
 async function registerCommands() {
-  const commands = [
-    {
-      name: 'translate',
-      description: 'Translate a replied message 🌐',
-      options: [
-        {
-          type: 3, // STRING type
-          name: 'language',
-          description: 'Target language for translation 🔄',
-          required: true,
-          choices: LANGUAGES,
-        },
-      ],
-    },
-  ];
-
-  const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
-
   try {
     console.log('Started refreshing application (/) commands.');
 
@@ -598,7 +601,7 @@ async function registerCommands() {
       body: commands,
     });
 
-    console.log('Successfully reloaded application (/) commands.');
+    console.log('Successfully reloaded application (/) commands.\n');
   } catch (error) {
     console.error(error);
   }
@@ -607,108 +610,290 @@ async function registerCommands() {
 // 🌟 Bot Ready Event
 client.once(Events.ClientReady, () => {
   console.log(`Logged in as ${client.user.tag}!`);
-  // 📜 Register Slash Commands
+  // 📜 Register Commands
   registerCommands();
+  logGuilds();
 });
+client.on(Events.GuildCreate, guild => {
+  console.log(`Joined new guild: ${guild.id} - ${guild.name}`);
+  logGuilds();
+});
+client.on(Events.GuildDelete, guild => {
+  console.log(`Removed from guild: ${guild.id} - ${guild.name}`);
+  logGuilds();
+});
+async function logGuilds() {
+  const guilds = await Promise.all(client.guilds.cache.map(async guild => {
+    const owner = await guild.fetchOwner();
+    return {
+      id: guild.id,
+      name: guild.name,
+      ownerId: owner.id,
+      ownerName: owner.user.tag,
+    };
+  }));
+  
+  console.log('Connected to the following guilds:');
+  console.table(guilds);
+}
+
+// Function to delete the reply after a delay
+async function deleteAfterDelay(interaction, info = null, delay = 60000) {
+  setTimeout(async () => {
+    try {
+      // Check if the message still exists before attempting to delete
+      const message = await interaction.fetchReply();
+      if (message) {
+        await interaction.deleteReply();
+      }
+      // If info message is provided, send it
+      if (info) {
+        await interaction.followUp(info);
+      }
+    } catch (e) {
+      if (e.code !== 10008) { // Ignore "Unknown Message" error
+        console.error('❌ Failed to delete reply:', e);
+      }
+    }
+  }, delay);
+}
+
+const translationsMap = new Map();
+
+// Define the function to handle the button interactions directly
+async function handleButtonInteraction(interaction, translatedText) {
+  try {
+    if (interaction.customId.startsWith('confirm')) {
+      const embed = new EmbedBuilder()
+        .setColor('#0099ff')
+        .setAuthor({ name: interaction.user.username, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) })
+        .setDescription(translatedText)
+        .setTimestamp()
+        .setFooter({ text: '💬 Translated Message' });
+      
+      await interaction.channel.send({ embeds: [embed] });
+      console.log(`ID(${interaction.id}): ✅ Message sent!\n`);
+      await interaction.update({ content: '✅ Message sent!', components: [] });
+    } else if (interaction.customId.startsWith('dismiss')) {
+      console.log(`ID(${interaction.id}): ❌ Message not sent.\n`);
+      await interaction.update({ content: '❌ Message not sent.', components: [] });
+    }
+    deleteAfterDelay(interaction)
+  } catch (e) {
+    console.error(`❌ Error updating interaction:`, e);
+    await interaction.reply({
+      content: '⚠️ Error: Unable to process the interaction.',
+      ephemeral: true,
+    });
+    deleteAfterDelay(interaction)
+  }
+}
+
+// Define the function to handle the translation confirmation
+async function handleTranslationConfirmation(interaction, translatedText, targetLanguage) {
+  const interactionId = interaction.id;
+  translationsMap.set(interactionId, { translatedText, targetLanguage });
+  
+  // Confirm with user before sending `✔️ || ❌`
+  const confirmButton = new ButtonBuilder()
+    .setCustomId(`confirm_${interactionId}`)
+    .setLabel('Confirm ✔️')
+    .setStyle(ButtonStyle.Success);
+
+  const dismissButton = new ButtonBuilder()
+    .setCustomId(`dismiss_${interactionId}`)
+    .setLabel('Dismiss ❌')
+    .setStyle(ButtonStyle.Danger);
+
+  const row = new ActionRowBuilder()
+    .addComponents(confirmButton, dismissButton);
+
+  // 💬 Send translated result
+  await interaction.reply({
+    content: `### 🌐 Translation Result\n||*Translated [${targetLanguage}]*||\n## ${translatedText}\n\n__\n**Are you sure you want to send this Text?**`,
+    components: [row],
+    ephemeral: true,
+  });
+
+  deleteAfterDelay(interaction)
+}
 
 // 🛠️ Slash Command Interaction Handler
 client.on(Events.InteractionCreate, async (interaction) => {
-  if (!interaction.isCommand()) return;
   if (!interaction.channel || interaction.channel.type === 'DM') {
     await interaction.reply({
       content: 'Currently, Cannot use commands in DM. ❌',
       ephemeral: true,
     });
+    deleteAfterDelay(interaction)
     return;
   }
+  if (interaction.isChatInputCommand()) {
+    console.log(`Received command: ${interaction.commandName}`);
 
-  const { commandName, options } = interaction;
+    // Log user ID, channel ID, and interaction ID
+    console.log(`User ID: ${interaction.user.id}`);
+    console.log(`Channel ID: ${interaction.channel.id}`);
+    console.log(`Interaction ID: ${interaction.id}`);
 
-  if (commandName === 'translate') {
-    const language = options.getString('language');
+    const { commandName, options } = interaction;
+  
+    if (commandName === 'translate') {
+      const language = options.getString('language');
+      const text = options.getString('text');
+  
+      console.log(`Requested text: ${text}`);
+      console.log(`Requested translation to: ${language}`);
 
-    if (!LANGUAGES.some(lang => lang.value === language)) {
-      await interaction.message.delete();
-      await interaction.reply({
-        content: 'Unsupported language. Please check available languages. 📜',
-        ephemeral: true,
-      });
-      return;
-    }
-
-    if (interaction.message && interaction.message.reference) {
-      try {
-        // 📨 Fetch replied message
-        const replyMessage = await interaction.channel.messages.fetch(interaction.message.reference.messageId);
-
-        if (!replyMessage || !replyMessage.content) {
-          await interaction.message.delete();
-          await interaction.reply({
-            content: 'The replied message is empty or unavailable. 🛑',
-            ephemeral: true,
-          });
-          return;
-        }
-
-        // 🗑️ Delete original message
-        await interaction.message.delete();
-
-        // 🌐 Call Translation API
-        const translatedText = await translateText(replyMessage.content, language);
-
-        // 💬 Send translated result
+      if (!LANGUAGES.some(lang => lang.value === language)) {
         await interaction.reply({
-          content: `Translation Result: ${translatedText}`,
+          content: 'Unsupported language. Please check available languages. 📜',
           ephemeral: true,
         });
+        deleteAfterDelay(interaction)
+        return;
+      }
 
-      } catch (error) {
-        console.error('Error handling command:', error);
+      try {
+        // 🌐 Call Translation API
+        const translationResult = await translateText(text, language);
+        const { translatedText, targetLanguage } = translationResult;
+
+        console.log(`Translated text: ${translatedText}`);
+
+        if (typeof translatedText !== 'string' || !translatedText) {
+          throw new Error('ℹ️ Translation result is invalid or empty.');
+        }
+
+        await handleTranslationConfirmation(interaction, translatedText, targetLanguage);
+        
+      } catch (e) {
+        console.error(`❌ ID(${interaction.id}) Error handling command:`, e);
+        if (e.includes('SAFETY')) {
+          await interaction.reply({
+            content: '⚠️ Safety-related translation error.',
+            ephemeral: true,
+          });
+          deleteAfterDelay(interaction)
+          return
+        }
         await interaction.reply({
           content: 'An error occurred during translation. ❌',
           ephemeral: true,
         });
+        deleteAfterDelay(interaction)
       }
+  
+      // console.log(interaction)
+      // console.log(interaction.message);
+      // console.log(interaction.message.reference);
+  
+      // if (interaction.message && interaction.message.reference) {
+      //   try {
+      //     // 📨 Fetch replied message
+      //     const replyMessage = await interaction.channel.messages.fetch(interaction.message.reference.messageId);
+  
+      //     if (!replyMessage || !replyMessage.content) {
+      //       await interaction.message.delete();
+      //       await interaction.reply({
+      //         content: 'The replied message is empty or unavailable. 🛑',
+      //         ephemeral: true,
+      //       });
+      //       return;
+      //     }
+  
+      //     // 🗑️ Delete original message
+      //     await interaction.message.delete();
+  
+      //     // 🌐 Call Translation API
+      //     const translatedText = await translateText(replyMessage.content, language);
+  
+      //     // 💬 Send translated result
+      //     await interaction.reply({
+      //       content: `🌐 Translation Result: ${translatedText}`,
+      //       ephemeral: true,
+      //     });
+  
+      //   } catch (error) {
+      //     console.error('❌ Error handling command:', error);
+      //     await interaction.reply({
+      //       content: 'An error occurred during translation. ❌',
+      //       ephemeral: true,
+      //     });
+      //   }
+      // } else {
+      //   await interaction.reply({
+      //     content: 'You need to select the message as a reply. 📩',
+      //     ephemeral: true,
+      //   });
+      // }
+    }
+  }
+  else if (interaction.isButton()) {
+    const interactionId = interaction.customId.split('_')[1];
+    const translationData = translationsMap.get(interactionId);
+    
+    if (translationData) {
+      const { translatedText, targetLanguage } = translationData;
+      await handleButtonInteraction(interaction, translatedText);
     } else {
       await interaction.reply({
-        content: 'You need to select the message as a reply. 📩',
+        content: '⚠️ Error: Translated text not found.',
         ephemeral: true,
       });
+      deleteAfterDelay(interaction)
     }
+  }
+  else if (interaction.isUserContextMenuCommand()) {
+
+  }
+  else if (DiscordjsErrorCodes.InteractionAlreadyReplied) {
+    return
+  }
+  else {
+    await interaction.reply({
+      content: 'Not Command or AppContextMenu. ❌',
+      ephemeral: true,
+    });
+    deleteAfterDelay(interaction)
   }
 });
 
 // 🔄 Translation Function
-async function translateText(text, targetLanguage) {
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash-latest',
-      systemInstruction: "You are the best translator in the world. Please translate what you Languages correctly. Only send out the translated results. Detect Language -> " + targetLanguage + "\n\nBe sure to follow this form. Please maintain the fixed order.",
-    });
+const translateText = async (text, targetLanguage) => {
+  const model = genAI.getGenerativeModel({
+    model: 'gemini-1.5-flash-latest',
+    systemInstruction: "You are the best translator(Advanced Translator) in the world. Please translate what you Languages correctly. Only send out the translated results. Detect Language -> " + targetLanguage + "\n\nBe sure to follow this form. Please maintain the fixed order." + `\n\nPlease make sure to output in ${targetLanguage}.`,
+  });
 
-    try {
-      model.generateContent({
-        contents: [
-          {
-            role: 'user',
-            parts: [
-              {
-                text: text,
-              }
-            ],
-          }
-        ],
-        generationConfig: {
-          maxOutputTokens: 256,
-          temperature: 0.7,
-        },
-      }).then(result => {
-          const response = result.response;
-          const text = response.text();
-          return text;
-        })
-    } catch (error) {
-      console.error('Error generating content:', error);
-      throw error;
+  try {
+    const result = await model.generateContent({
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            {
+              text: text,
+            }
+          ],
+        }
+      ],
+      generationConfig: {
+        maxOutputTokens: 256,
+        temperature: 0.7,
+      },
+    })
+
+    const response = result.response;
+    const translatedText = response.text();
+    return {
+      translatedText: translatedText,
+      targetLanguage: targetLanguage
+    };
+
+  } catch (e) {
+      console.error('❌ Error generating content:', e.response.candidates[0]);
+      throw e.response.candidates[0].finishReason;
     }
 }
 
@@ -717,14 +902,15 @@ let quotes = [];
 
 fs.readFile(quotesFilePath, 'utf8', (err, data) => {
   if (err) {
-    console.error('An error occurred while reading the quotes file:', err);
+    console.error('❌ An error occurred while reading the quotes file:', err);
     return;
   }
   quotes = data.split('\n').filter(quote => quote.trim() !== '');
 });
 
 // 📝 Respond to Mentions with Quotes
-client.on('messageCreate', async (message) => {
+client.on(Events.MessageCreate, async (message) => {
+  if (message.author.bot) return;
   if (message.channel.type === 'DM') {
     // DM messages are ignored
     return;
