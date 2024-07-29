@@ -1,0 +1,49 @@
+body {
+  font-family: 'Montserrat', "Noto Sans", "Noto Sans KR", "Noto Sans JP", "Noto Sans SC", "Noto Sans TC", "Noto Sans Thai", "Noto Sans Devanagari", "Noto Sans Arabic", sans-serif;
+  background-color: #36393F;
+  color: #FFFFFF;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.container {
+  background-color: #2F3136;
+  border-radius: 8px;
+  padding: 20px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.bot-icon img {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+}
+
+.options .option {
+  background-color: #424549;
+  border-radius: 8px;
+  cursor: pointer;
+  width: calc(50% - 10px);
+  text-align: center;
+  transition: background-color 0.3s;
+}
+
+.options .option:hover {
+  background-color: #5865F2;
+}
+
+.options .icon img {
+  width: 50px;
+  height: 50px;
+}
+
+.options .text {
+  margin-top: 10px;
+  font-size: 14px;
+}

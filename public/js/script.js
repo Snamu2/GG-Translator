@@ -84,7 +84,7 @@ document.querySelector('#viewOnlyBtn').addEventListener('click', () => {
     window.open('/view_only', '_blank');
 })
 document.querySelector('#discord-app').addEventListener('click', () => {
-    window.open('/app/discord/GGT', '_blank');
+    window.open('/discord_selector', '_blank');
 })
 
 

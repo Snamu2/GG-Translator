@@ -16,3 +16,7 @@
 
 # Info
 (gpt4 임시 폐쇄)
+
+기능: 멘션/명령어/앱메뉴
+
+~~flutter~~(Someday... For detail & discord app)

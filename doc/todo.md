@@ -1,9 +1,7 @@
-tts / copy
+tts / copy / alt
 shiny game / spin discord
-~~Update mentions & commands, Add log For Discord App~~   기능: 멘션/명령어/앱메뉴 Application Commands
-
-
-~~flutter~~(Someday... For detail & discord app)
+~~Add Discord_Selector page, fix minor invite errors~~
+Add Application Commands For Discord App
 
 firebase
 google cloud hosting

@@ -10,6 +10,8 @@ const OpenAI = require('openai');
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const { MongoClient, ObjectId } = require('mongodb');
 const methodOverride = require('method-override')
+const axios = require('axios');
+const qs = require('qs');
 const fs = require('fs');
 const path = require('path');
 var session = require('express-session')
@@ -540,14 +542,76 @@ io.on('connection', (socket) => {
   });
 });
 
-app.get('/app/discord/GGT', (req, res) => {
-  res.redirect(process.env.DISCORD_BOT_OAUTH2_URL)
+
+//
+// For Discord App <==
+//
+app.get('/discord_selector', (req, res) => {
+  res.render('discord_selector.ejs')
 });
 
-// For Discord App <==
-const { Client, GatewayIntentBits, Events, REST, Routes, SlashCommandBuilder, ContextMenuCommandBuilder, ApplicationCommandType, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, DiscordjsErrorCodes, ComponentType } = require('discord.js');
+const { Client, GatewayIntentBits, Events, REST, Routes, SlashCommandBuilder, ContextMenuCommandBuilder, ApplicationCommandType, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, DiscordjsErrorCodes } = require('discord.js');
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
+
+const CLIENT_ID = process.env.CLIENT_ID;
+const CLIENT_SECRET = process.env.CLIENT_SECRET;
+const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
+const REDIRECT_URI = 'http://localhost:3000/app/discord/GGT';
+// const REDIRECT_URI = 'https://ggglobaltrans.com/app/discord/GGT';
+
+// Discord OAuth2 인증 라우트
+app.get('/auth/discord/app', (req, res) => {
+  const scope = 'identify+messages.read+applications.commands+dm_channels.messages.read+dm_channels.messages.write+guilds.members.read'
+  const DISCORD_BOT_OAUTH2_URL = `https://discord.com/oauth2/authorize?client_id=${CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&integration_type=1&scope=${scope}`
+  res.redirect(DISCORD_BOT_OAUTH2_URL)
+});
+app.get('/auth/discord/server', (req, res) => {
+  const scope = 'identify+bot+applications.commands'
+  const DISCORD_BOT_OAUTH2_URL = `https://discord.com/oauth2/authorize?client_id=${CLIENT_ID}&permissions=563226978888768&response_type=code&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&integration_type=0&scope=${scope}`
+  res.redirect(DISCORD_BOT_OAUTH2_URL)
+});
+
+// Discord OAuth2 콜백 라우트
+app.get('/app/discord/GGT', async (req, res) => {
+  const code = req.query.code;
+
+  if (!code) {
+    return res.send('No code provided');
+  }
+
+  try {
+    const tokenResponse = await axios.post(
+      'https://discord.com/api/oauth2/token',
+      qs.stringify({
+        client_id: CLIENT_ID,
+        client_secret: CLIENT_SECRET,
+        grant_type: 'authorization_code',
+        code: code,
+        redirect_uri: REDIRECT_URI,
+      }),
+      {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      }
+    );
+
+    const { access_token, token_type } = tokenResponse.data;
+
+    // 사용자 정보 가져오기
+    const userResponse = await axios.get('https://discord.com/api/users/@me', {
+      headers: {
+        authorization: `${token_type} ${access_token}`,
+      },
+    });
+
+    res.send(userResponse.data);
+  } catch (error) {
+    console.error('Error getting access token:', error);
+    res.send('Error during authentication');
+  }
+});
 
 const quotesFilePath = path.join(__dirname, 'public', 'txt', 'quotes.txt');
 
@@ -571,7 +635,8 @@ const LANGUAGES = [
   { name: 'Turkish (TUR)', value: 'TUR' },
 ];
 
-// 📜 Register Slash Commands
+// 📜 Register Application Commands
+// Slash Commands
 const commands = [
   new SlashCommandBuilder()
     .setName('translate')
@@ -589,15 +654,21 @@ const commands = [
         .setDescription('Input Text')
         .setRequired(true)
     ),
+  // new ContextMenuCommandBuilder()
+  //   .setName('User Information')
+  //   .setType(ApplicationCommandType.User),
+  // new ContextMenuCommandBuilder()
+  //   .setName('Message Information')
+  //   .setType(ApplicationCommandType.Message),
 ];
 
-const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
+const rest = new REST({ version: '10' }).setToken(DISCORD_TOKEN);
 
 async function registerCommands() {
   try {
     console.log('Started refreshing application (/) commands.');
 
-    await rest.put(Routes.applicationCommands(process.env.CLIENT_ID), {
+    await rest.put(Routes.applicationCommands(CLIENT_ID), {
       body: commands,
     });
 
@@ -783,50 +854,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
         });
         deleteAfterDelay(interaction)
       }
-  
-      // console.log(interaction)
-      // console.log(interaction.message);
-      // console.log(interaction.message.reference);
-  
-      // if (interaction.message && interaction.message.reference) {
-      //   try {
-      //     // 📨 Fetch replied message
-      //     const replyMessage = await interaction.channel.messages.fetch(interaction.message.reference.messageId);
-  
-      //     if (!replyMessage || !replyMessage.content) {
-      //       await interaction.message.delete();
-      //       await interaction.reply({
-      //         content: 'The replied message is empty or unavailable. 🛑',
-      //         ephemeral: true,
-      //       });
-      //       return;
-      //     }
-  
-      //     // 🗑️ Delete original message
-      //     await interaction.message.delete();
-  
-      //     // 🌐 Call Translation API
-      //     const translatedText = await translateText(replyMessage.content, language);
-  
-      //     // 💬 Send translated result
-      //     await interaction.reply({
-      //       content: `🌐 Translation Result: ${translatedText}`,
-      //       ephemeral: true,
-      //     });
-  
-      //   } catch (error) {
-      //     console.error('❌ Error handling command:', error);
-      //     await interaction.reply({
-      //       content: 'An error occurred during translation. ❌',
-      //       ephemeral: true,
-      //     });
-      //   }
-      // } else {
-      //   await interaction.reply({
-      //     content: 'You need to select the message as a reply. 📩',
-      //     ephemeral: true,
-      //   });
-      // }
     }
   }
   else if (interaction.isButton()) {
@@ -844,15 +871,22 @@ client.on(Events.InteractionCreate, async (interaction) => {
       deleteAfterDelay(interaction)
     }
   }
-  else if (interaction.isUserContextMenuCommand()) {
-
+  else if (interaction.isContextMenuCommand()) {
+    if (interaction.isUserContextMenuCommand()) {
+      const { username } = interaction.targetUser;
+      await interaction.reply(`User's username: ${username}`);
+    }
+    else if (interaction.isMessageContextMenuCommand()) {
+      const { content } = interaction.targetMessage;
+      await interaction.reply(`Message content: ${content}`);
+    }
   }
   else if (DiscordjsErrorCodes.InteractionAlreadyReplied) {
     return
   }
   else {
     await interaction.reply({
-      content: 'Not Command or AppContextMenu. ❌',
+      content: '❌ Not Command or AppContextMenu.',
       ephemeral: true,
     });
     deleteAfterDelay(interaction)
@@ -926,9 +960,11 @@ client.on(Events.MessageCreate, async (message) => {
 });
 
 // 봇 로그인
-client.login(process.env.DISCORD_TOKEN);
+client.login(DISCORD_TOKEN);
 
+//
 // ==>
+//
 
 
 // const moment = require('moment');
