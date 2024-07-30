@@ -1,7 +1,6 @@
 tts / copy / alt
 shiny game / spin discord
-~~Add Discord_Selector page, fix minor invite errors~~
-Add Application Commands For Discord App
+Update&Add Application Commands For Discord App
 
 firebase
 google cloud hosting

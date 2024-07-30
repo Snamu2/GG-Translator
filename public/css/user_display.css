@@ -19,11 +19,20 @@ body {
   text-align: center;
 }
 .bot-name {
-  margin-top: 10px;
+  display: flex;
+  margin-top: 15px;
   font-size: 1.5rem;
   font-weight: 700;
+  align-items: center;
+  justify-content: center;
 }
 .user-info {
   margin-top: 20px;
   font-size: 1.1rem;
+}
+svg.bi.bi-stars {
+  margin-right: 5px;
+}
+svg.bi.bi-check-circle {
+  margin-left: 9px;
 }

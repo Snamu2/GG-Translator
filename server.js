@@ -552,7 +552,7 @@ app.get('/discord_selector', (req, res) => {
 
 const { Client, GatewayIntentBits, Events, REST, Routes, SlashCommandBuilder, ContextMenuCommandBuilder, ApplicationCommandType, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, DiscordjsErrorCodes } = require('discord.js');
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
+const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMembers] });
 
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
@@ -562,7 +562,7 @@ const REDIRECT_URI = 'http://localhost:3000/app/discord/GGT';
 
 // Discord OAuth2 인증 라우트
 app.get('/auth/discord/app', (req, res) => {
-  const scope = 'identify+messages.read+applications.commands+dm_channels.messages.read+dm_channels.messages.write+guilds.members.read'
+  const scope = 'identify+messages.read+applications.commands+guilds.members.read'
   const DISCORD_BOT_OAUTH2_URL = `https://discord.com/oauth2/authorize?client_id=${CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&integration_type=1&scope=${scope}`
   res.redirect(DISCORD_BOT_OAUTH2_URL)
 });
@@ -649,6 +649,7 @@ const LANGUAGES = [
 
 // 📜 Register Application Commands
 // Slash Commands
+// Context Menu Commands
 const commands = [
   new SlashCommandBuilder()
     .setName('translate')
@@ -666,59 +667,84 @@ const commands = [
         .setDescription('Input Text')
         .setRequired(true)
     ),
-  // new ContextMenuCommandBuilder()
-  //   .setName('User Information')
-  //   .setType(ApplicationCommandType.User),
-  // new ContextMenuCommandBuilder()
-  //   .setName('Message Information')
-  //   .setType(ApplicationCommandType.Message),
+
+  new ContextMenuCommandBuilder()
+    .setName('Translate to locale')
+    .setType(ApplicationCommandType.User),
+
+  new ContextMenuCommandBuilder()
+    .setName('Translate to locale')
+    .setType(ApplicationCommandType.Message),
 ];
 
-const rest = new REST({ version: '10' }).setToken(DISCORD_TOKEN);
+const rest = new REST().setToken(DISCORD_TOKEN);
 
-async function registerCommands() {
+// 📜 Register Commands
+(async () => {
   try {
-    console.log('Started refreshing application (/) commands.');
+    console.log(`Started refreshing ${commands.length} application (/) commands.`);
 
-    await rest.put(Routes.applicationCommands(CLIENT_ID), {
+    const data = await rest.put(Routes.applicationCommands(CLIENT_ID), {
       body: commands,
     });
 
-    console.log('Successfully reloaded application (/) commands.\n');
+    console.log(`Successfully reloaded ${data.length} application (/) commands.`);
   } catch (error) {
     console.error(error);
   }
-}
+})();
 
 // 🌟 Bot Ready Event
 client.once(Events.ClientReady, () => {
   console.log(`Logged in as ${client.user.tag}!`);
-  // 📜 Register Commands
-  registerCommands();
+  // 📜 logging Guilds Info
   logGuilds();
+  // logUsers();
 });
+
 client.on(Events.GuildCreate, guild => {
   console.log(`Joined new guild: ${guild.id} - ${guild.name}`);
   logGuilds();
 });
+
 client.on(Events.GuildDelete, guild => {
   console.log(`Removed from guild: ${guild.id} - ${guild.name}`);
   logGuilds();
 });
+
 async function logGuilds() {
   const guilds = await Promise.all(client.guilds.cache.map(async guild => {
     const owner = await guild.fetchOwner();
+    const memberCount = guild.memberCount;
     return {
       id: guild.id,
       name: guild.name,
       ownerId: owner.id,
       ownerName: owner.user.tag,
+      memberCount: memberCount,
     };
   }));
   
   console.log('Connected to the following guilds:');
   console.table(guilds);
+  console.log(`====================\n`);
 }
+
+// async function logUsers() {
+//   const users = await Promise.all(client.users.cache.map(async user => {
+//     const userInfo = await client.users.fetch(user.id);
+//     return {
+//       id: userInfo.id,
+//       username: userInfo.username,
+//       discriminator: userInfo.discriminator,
+//       tag: userInfo.tag,
+//       createdAt: userInfo.createdAt,
+//     };
+//   }));
+
+//   console.log('Cached users:');
+//   console.table(users);
+// }
 
 // Function to delete the reply after a delay
 async function deleteAfterDelay(interaction, info = null, delay = 60000) {
