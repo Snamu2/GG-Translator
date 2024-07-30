@@ -606,10 +606,22 @@ app.get('/app/discord/GGT', async (req, res) => {
       },
     });
 
-    res.send(userResponse.data);
+    res.render('user_display', userResponse.data);
+
   } catch (error) {
     console.error('Error getting access token:', error);
-    res.send('Error during authentication');
+
+    // 사용자에게 적절한 오류 메시지 반환
+    if (error.response) {
+      // 서버가 응답을 반환한 경우
+      res.status(error.response.status).send(`Error during authentication: ${error.response.data.error_description || 'Unknown error'}`);
+    } else if (error.request) {
+      // 서버로 요청이 전송되었으나 응답이 없는 경우
+      res.status(500).send('Error during authentication: No response from server');
+    } else {
+      // 요청을 설정하는 중 발생한 오류
+      res.status(500).send('Error during authentication: Request setup error');
+    }
   }
 });
 
