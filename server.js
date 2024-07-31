@@ -829,6 +829,7 @@ async function handleTranslationConfirmation(interaction, translatedText, target
 
 // 🛠️ Slash Command Interaction Handler
 client.on(Events.InteractionCreate, async (interaction) => {
+  // Handle invalid channel
   if (!interaction.channel || interaction.channel.type === 'DM') {
     await interaction.reply({
       content: 'Currently, Cannot use commands in DM. ❌',
@@ -837,13 +838,55 @@ client.on(Events.InteractionCreate, async (interaction) => {
     deleteAfterDelay(interaction)
     return;
   }
-  if (interaction.isChatInputCommand()) {
+  
+  // Function to log interaction details
+  const logInteractionDetails = (interaction) => {
     console.log(`Received command: ${interaction.commandName}`);
-
-    // Log user ID, channel ID, and interaction ID
     console.log(`User ID: ${interaction.user.id}`);
+    console.log(`Guild ID: ${interaction.guild.id}`);
     console.log(`Channel ID: ${interaction.channel.id}`);
     console.log(`Interaction ID: ${interaction.id}`);
+  };
+
+  // Function to handle errors
+  const handleError = async (interaction, e) => {
+    console.error(`❌ ID(${interaction.id}) Error handling command:`, e);
+    if (e.includes('SAFETY')) {
+      await interaction.reply({
+        content: '⚠️ Safety-related translation error.',
+        ephemeral: true,
+      });
+      deleteAfterDelay(interaction);
+      return;
+    }
+    await interaction.reply({
+      content: 'An error occurred during translation. ❌',
+      ephemeral: true,
+    });
+    deleteAfterDelay(interaction);
+  };
+
+  // Common translation handling function
+  const handleTranslation = async (interaction, text, language) => {
+    try {
+      // 🌐 Call Translation API
+      const translationResult = await translateText(text, language);
+      const { translatedText, targetLanguage } = translationResult;
+
+      console.log(`Translated text: ${translatedText}`);
+
+      if (typeof translatedText !== 'string' || !translatedText) {
+        throw new Error('ℹ️ Translation result is invalid or empty.');
+      }
+
+      await handleTranslationConfirmation(interaction, translatedText, targetLanguage);
+    } catch (e) {
+      await handleError(interaction, e);
+    }
+  };
+
+  if (interaction.isChatInputCommand()) {
+    logInteractionDetails(interaction);
 
     const { commandName, options } = interaction;
   
@@ -862,36 +905,40 @@ client.on(Events.InteractionCreate, async (interaction) => {
         deleteAfterDelay(interaction)
         return;
       }
+      
+      await handleTranslation(interaction, text, language);
+    }
+  }
+  else if (interaction.isContextMenuCommand()) {
+    logInteractionDetails(interaction);
 
-      try {
-        // 🌐 Call Translation API
-        const translationResult = await translateText(text, language);
-        const { translatedText, targetLanguage } = translationResult;
-
-        console.log(`Translated text: ${translatedText}`);
-
-        if (typeof translatedText !== 'string' || !translatedText) {
-          throw new Error('ℹ️ Translation result is invalid or empty.');
-        }
-
-        await handleTranslationConfirmation(interaction, translatedText, targetLanguage);
+    const { commandName, locale } = interaction;
+    let text = ``;
+    
+    if (commandName === 'Translate to locale') {
+      if (interaction.isUserContextMenuCommand()) {
+        const { nickname, user } = interaction.targetMember;
+        const username = nickname || user.username;
+        text = `${username}`
         
-      } catch (e) {
-        console.error(`❌ ID(${interaction.id}) Error handling command:`, e);
-        if (e.includes('SAFETY')) {
-          await interaction.reply({
-            content: '⚠️ Safety-related translation error.',
-            ephemeral: true,
-          });
-          deleteAfterDelay(interaction)
-          return
-        }
-        await interaction.reply({
-          content: 'An error occurred during translation. ❌',
-          ephemeral: true,
-        });
-        deleteAfterDelay(interaction)
+        console.log(`Target user: ${username}`);
       }
+      else if (interaction.isMessageContextMenuCommand()) {
+        const { content } = interaction.targetMessage;
+        text = `${content}`
+
+        console.log(`Target message: ${content}`);
+      }
+
+      console.log(`Requested text: ${text}`);
+      console.log(`Requested translation to: ${locale}`);
+
+      if (!text) {
+        console.log(`Invalid`)
+        return
+      };
+
+      await handleTranslation(interaction, text, locale);
     }
   }
   else if (interaction.isButton()) {
@@ -907,16 +954,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
         ephemeral: true,
       });
       deleteAfterDelay(interaction)
-    }
-  }
-  else if (interaction.isContextMenuCommand()) {
-    if (interaction.isUserContextMenuCommand()) {
-      const { username } = interaction.targetUser;
-      await interaction.reply(`User's username: ${username}`);
-    }
-    else if (interaction.isMessageContextMenuCommand()) {
-      const { content } = interaction.targetMessage;
-      await interaction.reply(`Message content: ${content}`);
     }
   }
   else if (DiscordjsErrorCodes.InteractionAlreadyReplied) {

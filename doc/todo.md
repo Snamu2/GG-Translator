@@ -1,11 +1,15 @@
 tts / copy / alt
 shiny game / spin discord
-Update&Add Application Commands For Discord App
+Update Application Commands For Discord App & Refactor interaction handler
 
 firebase
 google cloud hosting
 
 (DB recording)
+
+[Differentiation]
+음성 받아쓰기
+겹치는 음성 받아쓰기
 
 modal
 
