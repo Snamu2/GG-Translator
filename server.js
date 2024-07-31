@@ -697,6 +697,11 @@ const rest = new REST().setToken(DISCORD_TOKEN);
 // 🌟 Bot Ready Event
 client.once(Events.ClientReady, () => {
   console.log(`Logged in as ${client.user.tag}!`);
+  // 상태 메시지 설정
+  // client.user.setPresence({
+  //   activities: [{ name: '/translate || Right-click on a User/Message' }],
+  //   status: 'online'  // online, idle, dnd
+  // });
   // 📜 logging Guilds Info
   logGuilds();
   // logUsers();
