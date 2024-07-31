@@ -688,7 +688,7 @@ const rest = new REST().setToken(DISCORD_TOKEN);
       body: commands,
     });
 
-    console.log(`Successfully reloaded ${data.length} application (/) commands.`);
+    console.log(`✔️  Successfully reloaded ${data.length} application (/) commands.`);
   } catch (error) {
     console.error(error);
   }
@@ -730,7 +730,7 @@ async function logGuilds() {
     };
   }));
   
-  console.log('Connected to the following guilds:');
+  console.log('📜 Connected to the following guilds:');
   console.table(guilds);
   console.log(`====================\n`);
 }

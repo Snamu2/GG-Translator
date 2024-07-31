@@ -83,6 +83,7 @@ button.active {
 
 .language-section {
   display: none;
+  position: relative;
   opacity: 0;
   transition: opacity 0.5s ease, background-color 0.3s ease, transform 0.3s ease, all 0.5s ease !important;
   background-color: #ffffff;
@@ -142,4 +143,36 @@ h3 {
 p {
   font-size: 1.1em;
   color: #666;
+}
+
+.copy-button, .tts-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 7px;
+  margin: 5px;
+  border-radius: 10px;
+}
+.copy-button svg, .tts-button svg {
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.check-icon-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none; /* Prevents mouse interaction */
+}
+
+.check-icon {
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.show-check {
+  opacity: 1;
 }

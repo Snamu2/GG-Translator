@@ -128,3 +128,31 @@ window.onload = function() {
 document.querySelector('#refresh').addEventListener('click', () => {
   window.location.reload();
 })
+
+document.querySelectorAll('.language-section').forEach(section => {
+  const copyButton = section.querySelector('.copy-button');
+  const ttsButton = section.querySelector('.tts-button');
+
+  copyButton.addEventListener('click', () => {
+    const textToCopy = section.querySelector('p').innerText;
+
+    navigator.clipboard.writeText(textToCopy)
+      .then(() => {
+        const checkIcon = section.querySelector('.check-icon');
+        checkIcon.classList.add('show-check');
+
+        setTimeout(() => {
+          checkIcon.classList.remove('show-check');
+        }, 1500);
+      })
+      .catch(err => {
+        console.error('Failed to copy text.', err);
+      });
+  });
+
+  ttsButton.addEventListener('click', () => {
+    const textToSpeak = section.querySelector('p').innerText;
+    const speech = new SpeechSynthesisUtterance(textToSpeak);
+    speechSynthesis.speak(speech);
+  });
+});

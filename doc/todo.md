@@ -1,11 +1,15 @@
-tts / copy / alt
+hovering tool tip text
+mic
+tts => google's
+~~Add some alt, copy function, element for tts~~
 shiny game / spin discord
-Update Application Commands For Discord App & Refactor interaction handler
+앱을 추가한 사용자는 다른 서버에서도 기능을 이용할 수 있도록
 
 firebase
 google cloud hosting
 
 (DB recording)
+userlog
 
 [Differentiation]
 음성 받아쓰기
