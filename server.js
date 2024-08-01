@@ -1082,3 +1082,13 @@ app.use((req, res, next) => {
   console.error(`## 404 Error(Decoded): ${decodedUrl}`);
   res.status(404).render('404.ejs');
 });
+
+app.use((err, req, res, next) => {
+  if (req) {
+    const decodedUrl = decodeURIComponent(req.originalUrl);
+    console.error(`## 500 Error: ${req.originalUrl}`);
+    console.error(`## 500 Error(Decoded): ${decodedUrl}`);
+  }
+  console.error(err.stack)
+  res.status(500).send('Something broke!')
+});
