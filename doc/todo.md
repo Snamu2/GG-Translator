@@ -7,6 +7,7 @@ shiny game / spin discord
 
 firebase
 google cloud hosting
+captcha
 
 (DB recording)
 userlog
