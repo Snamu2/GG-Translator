@@ -8,6 +8,7 @@ const helmet = require('helmet');
 const { v4: uuidv4 } = require('uuid');
 const OpenAI = require('openai');
 const { GoogleGenerativeAI } = require("@google/generative-ai");
+const admin = require('firebase-admin');
 const { MongoClient, ObjectId } = require('mongodb');
 const methodOverride = require('method-override')
 const axios = require('axios');
@@ -57,6 +58,20 @@ app.use(
 // });
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+// === FireBase Admin Init ===
+// 서비스 계정 키 JSON 파일 경로
+const serviceAccount = require(path.resolve(process.env.GOOGLE_APPLICATION_CREDENTIALS));
+
+// Firebase Admin 초기화
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
+
+const fb_db = admin.firestore();
+
+// ===
+//
 
 const port = process.env.PORT;
 
