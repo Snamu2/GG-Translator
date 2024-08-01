@@ -1,9 +1,8 @@
 hovering tool tip text
 mic
 tts => google's
-~~Add shiny game text & spin discord icon~~
 
-firebase
+*firebase*
 google cloud hosting
 captcha
 

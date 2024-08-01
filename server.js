@@ -562,9 +562,10 @@ const REDIRECT_URI = 'http://localhost:3000/app/discord/GGT';
 
 // Discord OAuth2 인증 라우트
 app.get('/auth/discord/app', (req, res) => {
-  const scope = 'identify+messages.read+applications.commands+guilds.members.read'
-  const DISCORD_BOT_OAUTH2_URL = `https://discord.com/oauth2/authorize?client_id=${CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&integration_type=1&scope=${scope}`
-  res.redirect(DISCORD_BOT_OAUTH2_URL)
+  res.send("Go to `Add to Server`")
+  // const scope = 'identify+messages.read+applications.commands+guilds.members.read'
+  // const DISCORD_BOT_OAUTH2_URL = `https://discord.com/oauth2/authorize?client_id=${CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&integration_type=1&scope=${scope}`
+  // res.redirect(DISCORD_BOT_OAUTH2_URL)
 });
 app.get('/auth/discord/server', (req, res) => {
   const scope = 'identify+bot+applications.commands'
