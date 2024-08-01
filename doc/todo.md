@@ -1,9 +1,7 @@
 hovering tool tip text
 mic
 tts => google's
-~~Add some alt, copy function, element for tts~~
-shiny game / spin discord
-앱을 추가한 사용자는 다른 서버에서도 기능을 이용할 수 있도록
+~~Add shiny game text & spin discord icon~~
 
 firebase
 google cloud hosting
