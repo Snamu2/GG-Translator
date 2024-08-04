@@ -9,7 +9,7 @@ const { v4: uuidv4 } = require('uuid');
 const OpenAI = require('openai');
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const admin = require('firebase-admin');
-const { MongoClient, ObjectId } = require('mongodb');
+// const { MongoClient, ObjectId } = require('mongodb');
 const methodOverride = require('method-override')
 const axios = require('axios');
 const qs = require('qs');
@@ -35,10 +35,11 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         "default-src": ["'self'"],
-        "script-src": ["'self'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com", "https://cdn.socket.io", (req, res) => `'nonce-${res.locals.nonce}'`],
+        "connect-src": ["'self'", "https://*.googleapis.com", "https://www.google-analytics.com"],
+        "script-src": ["'self'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com", "https://cdn.socket.io", "https://www.gstatic.com", "https://www.googletagmanager.com", (req, res) => `'nonce-${res.locals.nonce}'`],
         "style-src": ["'self'", "https://cdn.jsdelivr.net", "https://fonts.googleapis.com", (req, res) => `'nonce-${res.locals.nonce}'`],
         "font-src": ["'self'", "https://fonts.gstatic.com"],
-        "img-src": ["'self'", "https://cdn.jsdelivr.net"],
+        "img-src": ["'self'", "https://cdn.jsdelivr.net", "https://www.googletagmanager.com"],
       },
     },
   })
@@ -68,17 +69,17 @@ admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
 
-const fb_db = admin.firestore();
+const db = admin.firestore();
 
 // ===
 //
 
 const port = process.env.PORT;
 
-const authDB = 'authDB(Experiment)';
-const authDB_post = 'post';
-const mainDB = 'mainDB(Experiment)';
-const mainDB_post = 'post';
+// const authDB = 'authDB(Experiment)';
+// const authDB_post = 'post';
+// const mainDB = 'mainDB(Experiment)';
+// const mainDB_post = 'post';
 
 // let db;
 // const url = process.env.DB_URL;
@@ -234,9 +235,10 @@ app.get('/animation', (req, res) => {
 })
 
 app.get('/list', async (req, res) => {
-    let result = await db.collection(authDB_post).find().toArray()
-    // res.send(result[0].title)
-    res.render('list.ejs', { 글목록 : result, nonce : res.locals.nonce })
+  res.status(503).send('This feature is currently unavailable.');
+  // let result = await db.collection(authDB_post).find().toArray()
+  // // res.send(result[0].title)
+  // res.render('list.ejs', { 글목록 : result, nonce : res.locals.nonce })
 })
 
 app.get('/write', (req, res) => {
@@ -244,103 +246,112 @@ app.get('/write', (req, res) => {
 })
 
 app.post('/add', async (req, res) => {
+  res.status(503).send('This feature is currently unavailable.');
 
-    try {
-        if (Object.keys(req.body).length !== 2) {
-            res.send('예상하지 못한 정보가 누락 혹은 포함되어 있습니다.')
-        } else if (!req.body.hasOwnProperty('title') || !req.body.hasOwnProperty('content')) {
-            res.send('필수 정보가 누락되었습니다.')
-        } else if (req.body.title == ''){
-            res.send('작성할 제목을 입력해주세요')
-        } else if (req.body.content == '') {
-            res.send('작성할 내용을 입력해주세요')
-        } else {
-            let result = await db.collection('post').insertOne({ title : req.body.title, content : req.body.content })
-            console.log(`## 새로운 document(_id : ${result.insertedId})가 다음과 같이 작성되었습니다.\ntitle : ${req.body.title}\ncontent : ${req.body.content}`)
-            res.redirect('/list')
-        }
-    } catch (e) {
-        console.log('## Error:', e.message)
-        res.status(500).send('서버에러')
-    }
+  // try {
+  //     if (Object.keys(req.body).length !== 2) {
+  //         res.send('예상하지 못한 정보가 누락 혹은 포함되어 있습니다.')
+  //     } else if (!req.body.hasOwnProperty('title') || !req.body.hasOwnProperty('content')) {
+  //         res.send('필수 정보가 누락되었습니다.')
+  //     } else if (req.body.title == ''){
+  //         res.send('작성할 제목을 입력해주세요')
+  //     } else if (req.body.content == '') {
+  //         res.send('작성할 내용을 입력해주세요')
+  //     } else {
+  //         let result = await db.collection('post').insertOne({ title : req.body.title, content : req.body.content })
+  //         console.log(`## 새로운 document(_id : ${result.insertedId})가 다음과 같이 작성되었습니다.\ntitle : ${req.body.title}\ncontent : ${req.body.content}`)
+  //         res.redirect('/list')
+  //     }
+  // } catch (e) {
+  //     console.log('## Error:', e.message)
+  //     res.status(500).send('서버에러')
+  // }
 
 })
 
 app.get('/detail/:id', async (req, res) => {
-    try {
-        let result = await db.collection('post').findOne({ _id : new ObjectId(req.params.id) })
-        // console.log(result)
-        if (result == null) {
-            res.status(404).send('이상한 url 입력함')
-        }
-        res.render('detail.ejs', { result : result })
-    } catch (e) {
-        console.log('## Error:', e.message)
-        res.status(404).send('이상한 url 입력함')
-    }
+  res.status(503).send('This feature is currently unavailable.');
+  // try {
+  //     let result = await db.collection('post').findOne({ _id : new ObjectId(req.params.id) })
+  //     // console.log(result)
+  //     if (result == null) {
+  //         res.status(404).send('이상한 url 입력함')
+  //     }
+  //     res.render('detail.ejs', { result : result })
+  // } catch (e) {
+  //     console.log('## Error:', e.message)
+  //     res.status(404).send('이상한 url 입력함')
+  // }
 })
 
 app.get('/edit/:id', async (req, res) => {
-    try {
-        let result = await db.collection('post').findOne({ _id : new ObjectId(req.params.id) })
-        // console.log(result)
-        if (result == null) {
-            res.status(404).send('이상한 url 입력함')
-        }
-        res.render('edit.ejs', { result : result })
-    } catch (e) {
-        console.log('## Error:', e.message)
-        res.status(404).send('이상한 url 입력함')
-    }
+  res.status(503).send('This feature is currently unavailable.');
+  // try {
+  //     let result = await db.collection('post').findOne({ _id : new ObjectId(req.params.id) })
+  //     // console.log(result)
+  //     if (result == null) {
+  //         res.status(404).send('이상한 url 입력함')
+  //     }
+  //     res.render('edit.ejs', { result : result })
+  // } catch (e) {
+  //     console.log('## Error:', e.message)
+  //     res.status(404).send('이상한 url 입력함')
+  // }
 })
 
 app.put('/edit', async (req, res) => {
+  res.status(503).send('This feature is currently unavailable.');
 
-    try {
-        if (Object.keys(req.body).length !== 3) {
-            res.send('예상하지 못한 정보가 누락 혹은 포함되어 있습니다.')
-        } else if (!req.body.hasOwnProperty('id') || !req.body.hasOwnProperty('title') || !req.body.hasOwnProperty('content')) {
-            res.send('필수 정보가 누락되었습니다.')
-        } else if (!ObjectId.isValid(req.body.id)) {
-            res.send(`(${req.body.id}) 유효하지 않은 ID입니다.`)
-        } else if (req.body.title == ''){
-            res.send('수정할 제목을 입력해주세요')
-        } else if (req.body.content == '') {
-            res.send('수정할 내용을 입력해주세요')
-        } else {
-            let result = await db.collection('post').updateOne({ _id : new ObjectId(req.body.id) }, {$set : { title : req.body.title, content : req.body.content }})
-            console.log(`## 기존 ${result.modifiedCount}개의 document(_id : ${req.body.id})가 다음과 같이 수정되었습니다.\ntitle : ${req.body.title}\ncontent : ${req.body.content}`)
-            res.redirect('/list')
-        }
-    } catch (e) {
-        console.log('## Error:', e.message)
-        res.status(500).send('서버에러')
-    }
+  // try {
+  //     if (Object.keys(req.body).length !== 3) {
+  //         res.send('예상하지 못한 정보가 누락 혹은 포함되어 있습니다.')
+  //     } else if (!req.body.hasOwnProperty('id') || !req.body.hasOwnProperty('title') || !req.body.hasOwnProperty('content')) {
+  //         res.send('필수 정보가 누락되었습니다.')
+  //     } else if (!ObjectId.isValid(req.body.id)) {
+  //         res.send(`(${req.body.id}) 유효하지 않은 ID입니다.`)
+  //     } else if (req.body.title == ''){
+  //         res.send('수정할 제목을 입력해주세요')
+  //     } else if (req.body.content == '') {
+  //         res.send('수정할 내용을 입력해주세요')
+  //     } else {
+  //         let result = await db.collection('post').updateOne({ _id : new ObjectId(req.body.id) }, {$set : { title : req.body.title, content : req.body.content }})
+  //         console.log(`## 기존 ${result.modifiedCount}개의 document(_id : ${req.body.id})가 다음과 같이 수정되었습니다.\ntitle : ${req.body.title}\ncontent : ${req.body.content}`)
+  //         res.redirect('/list')
+  //     }
+  // } catch (e) {
+  //     console.log('## Error:', e.message)
+  //     res.status(500).send('서버에러')
+  // }
 
 })
 
 app.delete('/delete', async (req, res) => {
+  res.status(503).send('This feature is currently unavailable.');
     
-    try {
-        if (Object.keys(req.query).length !== 3) {
-            res.send('예상하지 못한 정보가 누락 혹은 포함되어 있습니다.')
-        } else if (!req.query.hasOwnProperty('docid') || !req.query.hasOwnProperty('doctitle') || !req.query.hasOwnProperty('doccontent')) {
-            res.send('필수 정보가 누락되었습니다.')
-        } else if (!ObjectId.isValid(req.query.docid)) {
-            res.send(`(${req.query.docid}) 유효하지 않은 ID입니다.`)
-        } else {
-            let result = await db.collection('post').deleteOne({ _id : new ObjectId(req.query.docid) })
-            if (result.deletedCount === 0) {
-                return res.status(404).send('삭제할 문서를 찾을 수 없습니다.');
-            }
-            console.log(`## 기존 ${result.deletedCount}개의 다음 내용을 포함한 document(_id : ${req.query.docid})가 삭제되었습니다.\ntitle : ${req.query.doctitle}\ncontent : ${req.query.doccontent}`)
-            res.send('삭제완료')
-        }
-    } catch (e) {
-        console.log('## Error:', e.message)
-        res.status(500).send('서버에러')
-    }
+  // try {
+  //     if (Object.keys(req.query).length !== 3) {
+  //         res.send('예상하지 못한 정보가 누락 혹은 포함되어 있습니다.')
+  //     } else if (!req.query.hasOwnProperty('docid') || !req.query.hasOwnProperty('doctitle') || !req.query.hasOwnProperty('doccontent')) {
+  //         res.send('필수 정보가 누락되었습니다.')
+  //     } else if (!ObjectId.isValid(req.query.docid)) {
+  //         res.send(`(${req.query.docid}) 유효하지 않은 ID입니다.`)
+  //     } else {
+  //         let result = await db.collection('post').deleteOne({ _id : new ObjectId(req.query.docid) })
+  //         if (result.deletedCount === 0) {
+  //             return res.status(404).send('삭제할 문서를 찾을 수 없습니다.');
+  //         }
+  //         console.log(`## 기존 ${result.deletedCount}개의 다음 내용을 포함한 document(_id : ${req.query.docid})가 삭제되었습니다.\ntitle : ${req.query.doctitle}\ncontent : ${req.query.doccontent}`)
+  //         res.send('삭제완료')
+  //     }
+  // } catch (e) {
+  //     console.log('## Error:', e.message)
+  //     res.status(500).send('서버에러')
+  // }
 
+})
+
+app.get('/authentication', (req, res) => {
+  res.render('authentication.ejs')
 })
 
 app.get('/auth', (req, res) => {
@@ -348,8 +359,9 @@ app.get('/auth', (req, res) => {
 })
 
 app.get('/auth/list', async (req, res) => {
-    let result = await db.collection(authDB_post).find().toArray()
-    res.render('auth_list.ejs', { 글목록 : result })
+  res.status(503).send('This feature is currently unavailable.');
+  // let result = await db.collection(authDB_post).find().toArray()
+  // res.render('auth_list.ejs', { 글목록 : result })
 })
 
 app.get('/time', (req, res) => {
@@ -373,23 +385,24 @@ app.get('/', (req, res) => {
 // })
 
 app.post('/feedback/confirm', function(req, res){
-    res.sendFile(__dirname + '/confirm.html')
-    var date = new Date();
-    var year = date.getFullYear();
-    var month = ("0" + (date.getMonth()+1)).slice(-2);
-    var day = ("0" + date.getDate()).slice(-2);
-    var hours = ("0" + date.getHours()).slice(-2);
-    var minutes = ("0" + date.getMinutes()).slice(-2);
-    var seconds = ("0" + date.getSeconds()).slice(-2);
-    
-    var today = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-    console.log(today)
-    console.log(req.body.username)
-    console.log(req.body.content)
+  res.status(503).send('This feature is currently unavailable.');
+  // res.sendFile(__dirname + '/confirm.html')
+  // var date = new Date();
+  // var year = date.getFullYear();
+  // var month = ("0" + (date.getMonth()+1)).slice(-2);
+  // var day = ("0" + date.getDate()).slice(-2);
+  // var hours = ("0" + date.getHours()).slice(-2);
+  // var minutes = ("0" + date.getMinutes()).slice(-2);
+  // var seconds = ("0" + date.getSeconds()).slice(-2);
+  
+  // var today = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  // console.log(today)
+  // console.log(req.body.username)
+  // console.log(req.body.content)
 
-    db.collection('Feedback (Experimental Version)').insertOne({ 날짜 : today, 유저명 : req.body.username, 내용 : req.body.content }, (err, result) => {
-        console.log('## Feedback 데이터 저장완료');
-    });
+  // db.collection('Feedback (Experimental Version)').insertOne({ 날짜 : today, 유저명 : req.body.username, 내용 : req.body.content }, (err, result) => {
+  //     console.log('## Feedback 데이터 저장완료');
+  // });
 });
 
 
@@ -420,6 +433,21 @@ let selectedModel = 'gemini-1.5-flash-latest';
 
 let translationResults = [];
 let lastSentResults = [];
+
+// Firebase Firestore에 WebApp의 일반 저장
+async function saveTranslationToFirestore(input, output, model) {
+  try {
+    const docRef = await db.collection('translations').add({
+      input: input,
+      output: output,
+      model: model,
+      timestamp: admin.firestore.FieldValue.serverTimestamp()
+    });
+    console.log("Document written with ID:", docRef.id);
+  } catch (error) {
+    console.error("Error adding document: ", error);
+  }
+}
 
 app.post('/', (req, res) => {
     let param = req.body.param;
@@ -479,8 +507,8 @@ app.post('/', (req, res) => {
         }
     } else if (model === 'gemini-1.5-flash-latest') {
         const model = genAI.getGenerativeModel({
-            model: selectedModel,
-            systemInstruction: "You are the best translator in the world. Please translate what you Languages correctly. Only send out the translated results. Detect Language -> \n\n" + SetLanguage + "\n\nBe sure to follow this form. Please maintain the fixed order.",
+          model: selectedModel,
+          systemInstruction: "You are the best translator in the world. Please translate what you Languages correctly. Only send out the translated results. Detect Language -> \n\n" + SetLanguage + "\n\nBe sure to follow this form. Please maintain the fixed order.",
         });
 
         model.generateContent({
@@ -499,12 +527,16 @@ app.post('/', (req, res) => {
             temperature: 0.7,
           },
         }).then(result => {
-            const response = result.response;
-            const text = response.text();
-            // console.log(text);
-            translationResults.push({ input: param, output: text });
-            res.json(text);
-            // return res.status(200).json({ success: true });
+          const response = result.response;
+          const text = response.text();
+          // console.log(text);
+          translationResults.push({ input: param, output: text });
+
+          // Firestore에 번역 결과 저장
+          saveTranslationToFirestore(param, text, selectedModel);
+
+          res.json(text);
+          // return res.status(200).json({ success: true });
         })
     } else {
         return res.status(400).json({ error: 'Invalid model' });
@@ -720,16 +752,57 @@ client.once(Events.ClientReady, () => {
   // });
   // 📜 logging Guilds Info
   logGuilds();
-  // logUsers();
+  syncAllGuilds(); // sync with db
 });
+// 주기적인 동기화 (6시간마다)
+setInterval(syncAllGuilds, 6 * 60 * 60 * 1000);
 
-client.on(Events.GuildCreate, guild => {
-  console.log(`Joined new guild: ${guild.id} - ${guild.name}`);
+async function syncAllGuilds() {
+  try {
+    const guilds = client.guilds.cache;
+    const promises = guilds.map(guild => saveGuildInfoToFirestore(guild));
+    await Promise.all(promises);
+    console.log(`Synchronized ${guilds.size} guilds`);
+  } catch (error) {
+    console.error("Error syncing guilds:", error);
+  }
+}
+
+// Discord 서버 정보를 Firestore에 저장
+async function saveGuildInfoToFirestore(guild) {
+  try {
+    const owner = await guild.fetchOwner();
+    const docRef = db.collection('discordGuilds').doc(guild.id);
+    await docRef.set({
+      id: guild.id,
+      name: guild.name,
+      ownerId: owner.id,
+      ownerName: owner.user.tag,
+      memberCount: guild.memberCount,
+      lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
+      joinedAt: guild.joinedTimestamp ? new Date(guild.joinedTimestamp) : null
+    }, { merge: true });
+    console.log(`📜✔️  Guild info saved for ${guild.name} (ID: ${guild.id})`);
+  } catch (error) {
+    console.error(`❌ Error saving guild info for ${guild.id}: `, error);
+    // console.error('Guild object:', JSON.stringify(guild, null, 2));
+  }
+}
+
+client.on(Events.GuildCreate, async guild => {
+  console.log(`📜✔️  Joined new guild: ${guild.id} - ${guild.name}`);
+  await saveGuildInfoToFirestore(guild);
   logGuilds();
 });
 
-client.on(Events.GuildDelete, guild => {
-  console.log(`Removed from guild: ${guild.id} - ${guild.name}`);
+client.on(Events.GuildDelete, async guild => {
+  console.log(`📜❌ Removed from guild: ${guild.id} - ${guild.name}`);
+  try {
+    await db.collection('discordGuilds').doc(guild.id).delete();
+    console.log(`📜❌ Guild info deleted for ${guild.name} (ID: ${guild.id})`);
+  } catch (error) {
+    console.error(`❌ Error deleting guild info for ${guild.id}: `, error);
+  }
   logGuilds();
 });
 
@@ -751,21 +824,24 @@ async function logGuilds() {
   console.log(`====================\n`);
 }
 
-// async function logUsers() {
-//   const users = await Promise.all(client.users.cache.map(async user => {
-//     const userInfo = await client.users.fetch(user.id);
-//     return {
-//       id: userInfo.id,
-//       username: userInfo.username,
-//       discriminator: userInfo.discriminator,
-//       tag: userInfo.tag,
-//       createdAt: userInfo.createdAt,
-//     };
-//   }));
+// Firestore에 사용자 정보 저장 또는 업데이트
+async function saveOrUpdateUserInfo(user, locale) {
+  try {
+    const userRef = db.collection('discordUsers').doc(user.id);
+    const userData = {
+      id: user.id,
+      tag: user.tag,
+      username: user.username,
+      locale: locale ?? null,
+      lastUpdated: admin.firestore.FieldValue.serverTimestamp()
+    };
 
-//   console.log('Cached users:');
-//   console.table(users);
-// }
+    await userRef.set(userData, { merge: true });
+    console.log(`User info saved/updated for ${user.tag}`);
+  } catch (error) {
+    console.error("Error saving/updating user info: ", error);
+  }
+}
 
 // Function to delete the reply after a delay
 async function deleteAfterDelay(interaction, info = null, delay = 60000) {
@@ -775,6 +851,7 @@ async function deleteAfterDelay(interaction, info = null, delay = 60000) {
       const message = await interaction.fetchReply();
       if (message) {
         await interaction.deleteReply();
+        await handleInteractionTimeout(interaction);
       }
       // If info message is provided, send it
       if (info) {
@@ -790,10 +867,58 @@ async function deleteAfterDelay(interaction, info = null, delay = 60000) {
 
 const translationsMap = new Map();
 
+async function saveButtonInteractionResult(userId, interactionId, action) {
+  try {
+    const resultData = {
+      interactionId: interactionId,
+      action: action, // 'confirm', 'dismiss', or 'timeout'
+      timestamp: admin.firestore.FieldValue.serverTimestamp()
+    };
+
+    await db.collection('DiscordApp').doc(userId).collection('button_interactions').add(resultData);
+    console.log(`📜✔️  Button interaction result saved for user ${userId}: ${action}`);
+  } catch (error) {
+    console.error("❌ Error saving button interaction result: ", error);
+  }
+}
+
+async function handleInteractionTimeout(interaction) {
+  try {
+    const userId = interaction.user.id;
+    const interactionId = interaction.id;
+
+    await saveButtonInteractionResult(userId, interactionId, 'timeout');
+
+    // 메시지가 여전히 존재하는지 확인
+    const message = await interaction.fetchReply().catch(() => null);
+    if (message) {
+      await interaction.editReply({
+        content: "⏳ Time's up! The interaction has expired.",
+        components: []
+      });
+    } else {
+      console.log(`ID(${interactionId}): Message no longer exists, skipping edit.`);
+    }
+
+    console.log(`ID(${interactionId}): ⏳ Interaction timed out.`);
+  } catch (error) {
+    if (error.code === 10008) {
+      console.log(`ID(${interaction.id}): Interaction already handled or message deleted.`);
+    } else {
+      console.error(`❌ Error handling interaction timeout:`, error);
+    }
+  }
+}
+
 // Define the function to handle the button interactions directly
 async function handleButtonInteraction(interaction, translatedText) {
   try {
+    const userId = interaction.user.id;
+    const interactionId = interaction.customId.split('_')[1];
+    let action;
+    
     if (interaction.customId.startsWith('confirm')) {
+      action = 'confirm';
       const embed = new EmbedBuilder()
         .setColor('#0099ff')
         .setAuthor({ name: interaction.user.username, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) })
@@ -805,9 +930,14 @@ async function handleButtonInteraction(interaction, translatedText) {
       console.log(`ID(${interaction.id}): ✅ Message sent!\n`);
       await interaction.update({ content: '✅ Message sent!', components: [] });
     } else if (interaction.customId.startsWith('dismiss')) {
+      action = 'dismiss';
       console.log(`ID(${interaction.id}): ❌ Message not sent.\n`);
       await interaction.update({ content: '❌ Message not sent.', components: [] });
     }
+    
+    // Save the button interaction result
+    await saveButtonInteractionResult(userId, interactionId, action);
+
     deleteAfterDelay(interaction)
   } catch (e) {
     console.error(`❌ Error updating interaction:`, e);
@@ -850,6 +980,9 @@ async function handleTranslationConfirmation(interaction, translatedText, target
 
 // 🛠️ Slash Command Interaction Handler
 client.on(Events.InteractionCreate, async (interaction) => {
+  // 모든 상호작용에 대해 사용자 정보 업데이트
+  await saveOrUpdateUserInfo(interaction.user, interaction.locale);
+
   // Handle invalid channel
   if (!interaction.channel || interaction.channel.type === 'DM') {
     await interaction.reply({
@@ -862,11 +995,13 @@ client.on(Events.InteractionCreate, async (interaction) => {
   
   // Function to log interaction details
   const logInteractionDetails = (interaction) => {
-    console.log(`Received command: ${interaction.commandName}`);
-    console.log(`User ID: ${interaction.user.id}`);
-    console.log(`Guild ID: ${interaction.guild.id}`);
-    console.log(`Channel ID: ${interaction.channel.id}`);
-    console.log(`Interaction ID: ${interaction.id}`);
+    console.log(`📝 Interaction Type: ${interaction.type}`);
+    console.log(`📝 Received command: ${interaction.commandName}`);
+    console.log(`📝 User ID: ${interaction.user.id}`);
+    console.log(`📝 Guild ID: ${interaction.guild.id}`);
+    console.log(`📝 Channel ID: ${interaction.channel.id}`);
+    console.log(`📝 Interaction ID: ${interaction.id}`);
+    console.log(`📝 User locale: ${interaction.locale}`);
   };
 
   // Function to handle errors
@@ -891,7 +1026,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
   const handleTranslation = async (interaction, text, language) => {
     try {
       // 🌐 Call Translation API
-      const translationResult = await translateText(text, language);
+      const translationResult = await translateText(interaction, text, language);
       const { translatedText, targetLanguage } = translationResult;
 
       console.log(`Translated text: ${translatedText}`);
@@ -989,14 +1124,98 @@ client.on(Events.InteractionCreate, async (interaction) => {
   }
 });
 
+// Firestore에 번역 요청 저장
+async function saveTranslationRequestToFirestore(interaction, text, targetLanguage, modelName) {
+  try {
+    const userId = interaction.user.id;
+    const guildId = interaction.guild.id;
+    const guildName = interaction.guild.name;
+    const commandName = interaction.commandName;
+    const userTag = interaction.user.tag;
+    const userLocale = interaction.locale ?? null;
+
+    let commandType;
+    if (interaction.isChatInputCommand()) {
+      commandType = 1; // CHAT_INPUT
+    } else if (interaction.isUserContextMenuCommand()) {
+      commandType = 2; // USER
+    } else if (interaction.isMessageContextMenuCommand()) {
+      commandType = 3; // MESSAGE
+    } else {
+      commandType = 0; // Unknown type
+    }
+
+    let targetId, targetTag, targetMessage;
+    if (interaction.isUserContextMenuCommand()) {
+      targetId = interaction.targetUser.id;
+      targetTag = interaction.targetUser.tag;
+      targetMessage = null;
+    } else if (interaction.isMessageContextMenuCommand()) {
+      targetId = interaction.targetMessage.author.id;
+      targetTag = interaction.targetMessage.author.tag;
+      targetMessage = interaction.targetMessage.content;
+    } else {
+      targetId = null;
+      targetTag = null;
+      targetMessage = text;
+    }
+
+    const requestData = {
+      guildId: guildId,
+      guildName: guildName,
+      commandName: commandName,
+      commandType: commandType,
+      requesterId: userId,
+      requesterTag: userTag,
+      requesterLocale: userLocale,
+      targetId: targetId,
+      targetTag: targetTag,
+      targetMessage: targetMessage,
+      targetLanguage: targetLanguage,
+      modelName: modelName,
+      timestamp: admin.firestore.FieldValue.serverTimestamp()
+    };
+
+    // 사용자 정보 업데이트
+    await saveOrUpdateUserInfo(interaction.user, interaction.locale);
+
+    const docRef = await db.collection('DiscordApp').doc(userId).collection('translation_requests').add(requestData);
+    console.log(`Translation request saved for user ${userId}`);
+    return docRef;
+  } catch (error) {
+    console.error("Error saving translation request: ", error);
+  }
+}
+
+// Firestore에 번역 결과 저장
+async function saveTranslationResultToFirestore(userId, requestId, translatedText, modelName) {
+  try {
+    const resultData = {
+      requestId: requestId,
+      translatedText: translatedText,
+      modelName: modelName,
+      timestamp: admin.firestore.FieldValue.serverTimestamp()
+    };
+
+    await db.collection('DiscordApp').doc(userId).collection('translation_results').add(resultData);
+    console.log(`Translation result saved for user ${userId}`);
+  } catch (error) {
+    console.error("Error saving translation result: ", error);
+  }
+}
+
 // 🔄 Translation Function
-const translateText = async (text, targetLanguage) => {
+const translateText = async (interaction, text, targetLanguage) => {
+  const modelName = 'gemini-1.5-flash-latest';
   const model = genAI.getGenerativeModel({
-    model: 'gemini-1.5-flash-latest',
+    model: modelName,
     systemInstruction: "You are the best translator(Advanced Translator) in the world. Please translate what you Languages correctly. Only send out the translated results. Detect Language -> " + targetLanguage + "\n\nBe sure to follow this form. Please maintain the fixed order." + `\n\nPlease make sure to output in ${targetLanguage}.`,
   });
 
   try {
+    // 번역 요청 저장
+    const requestDocRef = await saveTranslationRequestToFirestore(interaction, text, targetLanguage, modelName)
+
     const result = await model.generateContent({
       contents: [
         {
@@ -1016,15 +1235,20 @@ const translateText = async (text, targetLanguage) => {
 
     const response = result.response;
     const translatedText = response.text();
+
+    // 번역 결과 저장
+    await saveTranslationResultToFirestore(interaction.user.id, requestDocRef.id, translatedText, modelName)
+
     return {
       translatedText: translatedText,
-      targetLanguage: targetLanguage
+      targetLanguage: targetLanguage,
+      modelName: modelName
     };
 
   } catch (e) {
-      console.error('❌ Error generating content:', e.response.candidates[0]);
-      throw e.response.candidates[0].finishReason;
-    }
+    console.error('❌ Error generating content:', e.response?.candidates[0] || e);
+    throw e.response?.candidates[0]?.finishReason || 'Unknown error';
+  }
 }
 
 // 📚 Read Quotes File

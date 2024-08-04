@@ -2,7 +2,16 @@
     
 } */
 #txtOutput {
-    word-wrap: break-word;
+  word-wrap: break-word;
+}
+#auth-buttons {
+  margin: 20px auto;
+  margin-right: 20px;
+}
+#auth-buttons button {
+  --bs-btn-font-size: 0.65rem;
+  --bs-btn-font-weight: 600;
+  padding: calc(var(--bs-btn-padding-y) * 0.6) calc(var(--bs-btn-padding-x) * 0.6);
 }
 
 .montserrat-font-Medium {

@@ -1,18 +1,13 @@
-hovering tool tip text
-mic
 tts => google's
 
-난독화
+more *firebase*
 
-**// Firebase 클라이언트 초기화 .mjs or type='module'**
-
-*firebase*((DB recording)=> DB작업)
-기존 db 재연결(오류방지)
-userlog
-
-google cloud hosting
+tagmanager
 captcha
 
+hovering tool tip text
+mic
+캡쳐 이미지 로컬 번역
 
 ---
 
