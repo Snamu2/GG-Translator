@@ -15,10 +15,10 @@
 </head>
 <body class="grey-bg">
     <div class="container auth-container white-bg">
-        <h2 class="text-center py-4 montserrat-font-Black">Login / Signup</h2>
-        <div class="form-switch text-center">
-            <button class="btn btn-secondary mx-2 montserrat-font-SemiBold" id="login-btn">Login</button>
-            <button class="btn btn-secondary mx-2 montserrat-font-SemiBold" id="signup-btn">Signup</button>
+        <h2 class="text-center py-4 montserrat-font-Black" aria-label="Login and Signup Page Title">Login / Signup</h2>
+        <div class="form-switch text-center" role="group" aria-label="Switch between login and signup forms">
+            <button class="btn btn-secondary mx-2 montserrat-font-SemiBold" id="login-btn" aria-pressed="true">Login</button>
+            <button class="btn btn-secondary mx-2 montserrat-font-SemiBold" id="signup-btn" aria-pressed="false">Signup</button>
         </div>
         <div class="form-container mt-4" id="form-container">
             <form id="login-form" class="auth-form">

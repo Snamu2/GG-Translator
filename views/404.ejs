@@ -11,9 +11,9 @@
 </head>
 <body class="grey-bg">
 
-  <div class="container">
-    <div class="error-box white-bg">
-      <div class="error-animation">
+  <div class="container" role="main">
+    <div class="error-box white-bg" role="alert" aria-labelledby="error-title">
+      <div class="error-animation" aria-hidden="true">
         <canvas id="canvas" width="800" height="372"></canvas>
         <div class="planet"></div>
         <div class="ufo">
@@ -23,7 +23,7 @@
       </div>
       <h1>404</h1>
       <p>Oops! The page you're looking for is not here.</p>
-      <a href="/" class="go-home">Go Home</a>
+      <a href="/" class="go-home" role="button">Go Home</a>
     </div>
   </div>
 

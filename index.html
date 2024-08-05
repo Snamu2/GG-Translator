@@ -19,9 +19,9 @@
     <link href="css/shiny.css" rel="stylesheet">
 </head>
 <body class="grey-bg">
-    <div class="nav d-flex justify-content-between align-items-center">
+    <div class="nav d-flex justify-content-between align-items-center" role="navigation">
         <div id="start" class="d-flex justify-content-between align-items-center">
-            <a class="logo" href="/">
+            <a class="logo" href="/" aria-label="GG Translator Home">
                 <span class="base">GG</span>
                 <span class="anaglyph">GG</span> Translator
             </a>
@@ -43,41 +43,41 @@
     </div>
 
     <div class="container white-bg">
-        <h2 class="text-center py-4 montserrat-font-Medium">Welcome to <b>G</b>oogle <b>G</b>emini Translator</h2>
+        <h2 class="text-center py-4 montserrat-font-Medium" aria-label="Welcome Message">Welcome to <b>G</b>oogle <b>G</b>emini Translator</h2>
 
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <span class="gpt-mode">
-                <svg xmlns="http://www.w3.org/2000/svg" alt="Stars" width="21" height="21" fill="#F5A6B3" class="bi bi-stars" viewBox="0 0 16 16">
+            <span class="gpt-mode" aria-label="GPT-4 Mode">
+                <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" alt="Stars" width="21" height="21" fill="#F5A6B3" class="bi bi-stars" viewBox="0 0 16 16">
                     <path d="M7.657 6.247c.11-.33.576-.33.686 0l.645 1.937a2.89 2.89 0 0 0 1.829 1.828l1.936.645c.33.11.33.576 0 .686l-1.937.645a2.89 2.89 0 0 0-1.828 1.829l-.645 1.936a.361.361 0 0 1-.686 0l-.645-1.937a2.89 2.89 0 0 0-1.828-1.828l-1.937-.645a.361.361 0 0 1 0-.686l1.937-.645a2.89 2.89 0 0 0 1.828-1.828zM3.794 1.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387A1.73 1.73 0 0 0 4.593 5.69l-.387 1.162a.217.217 0 0 1-.412 0L3.407 5.69A1.73 1.73 0 0 0 2.31 4.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387A1.73 1.73 0 0 0 3.407 2.31zM10.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.16 1.16 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.16 1.16 0 0 0-.732-.732L9.1 2.137a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732z"/>
                 </svg>
                 GPT-4 Mode</span>
-            <div class="toggle-button off" id="toggleSwitch">
+            <div class="toggle-button off" id="toggleSwitch" role="switch" aria-checked="false" tabindex="0">
                 <div class="switch"></div>
             </div>
         </div>
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <span class="gemini-mode">
-                <svg xmlns="http://www.w3.org/2000/svg" alt="Stars" width="21" height="21" fill="#F5A6B3" class="bi bi-stars" viewBox="0 0 16 16">
+            <span class="gemini-mode" aria-label="Gemini-1.5 Mode">
+                <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" alt="Stars" width="21" height="21" fill="#F5A6B3" class="bi bi-stars" viewBox="0 0 16 16">
                     <path d="M7.657 6.247c.11-.33.576-.33.686 0l.645 1.937a2.89 2.89 0 0 0 1.829 1.828l1.936.645c.33.11.33.576 0 .686l-1.937.645a2.89 2.89 0 0 0-1.828 1.829l-.645 1.936a.361.361 0 0 1-.686 0l-.645-1.937a2.89 2.89 0 0 0-1.828-1.828l-1.937-.645a.361.361 0 0 1 0-.686l1.937-.645a2.89 2.89 0 0 0 1.828-1.828zM3.794 1.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387A1.73 1.73 0 0 0 4.593 5.69l-.387 1.162a.217.217 0 0 1-.412 0L3.407 5.69A1.73 1.73 0 0 0 2.31 4.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387A1.73 1.73 0 0 0 3.407 2.31zM10.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.16 1.16 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.16 1.16 0 0 0-.732-.732L9.1 2.137a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732z"/>
                 </svg>
                 Gemini-1.5 Mode
             </span>
-            <div class="toggle-button off" id="geminitoggleSwitch">
+            <div class="toggle-button off" id="geminitoggleSwitch" role="switch" aria-checked="false" tabindex="1">
                 <div class="switch"></div>
             </div>
         </div>
 
-        <div id="txtInput" class="edit_box_active mb-3">
+        <div id="txtInput" class="edit_box_active mb-3" role="textbox" aria-label="Input text for translation" contenteditable="true">
             <textarea class="edit_box" placeholder="Enter text to translate..." id="txtSource" name="txtSource" aria-label="Source Text" rows="4"></textarea>
             <p><span id="charCount">0 / 0</span></p>
         </div>
 
         <div class="d-flex justify-content-center mb-3">
-            <button type="button" class="btn btn-outline-secondary mx-2 montserrat-font-SemiBold" id="Clear">Clear</button>
-            <button type="button" class="btn btn-primary mx-2 montserrat-font-SemiBold" id="Translate">Translate</button>
+            <button type="button" class="btn btn-outline-secondary mx-2 montserrat-font-SemiBold" id="Clear" aria-label="Clear input text">Clear</button>
+            <button type="button" class="btn btn-primary mx-2 montserrat-font-SemiBold" id="Translate" aria-label="Translate text">Translate</button>
         </div>
 
-        <div id="txtOutput" class="edit_box_active mb-3"></div>
+        <div id="txtOutput" class="edit_box_active mb-3" role="region" aria-label="Translation output"></div>
 
         <div class="d-flex justify-content-center mb-3">
             <button type="button" class="btn btn-success mx-2 montserrat-font-SemiBold" id="viewOnlyBtn">View Only</button>
