@@ -8,7 +8,7 @@ import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.5/firebas
 // import { getPerformance } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-performance.js";
 // import { getDatabase } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
 // import { getRemoteConfig } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-remote-config.js";
-// import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app-check.js";
+import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app-check.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyD3p6JuuBzDLtnuInozqhr-5Ex8zE22oNg",
@@ -33,6 +33,9 @@ const db = getFirestore(app);
 // const performance = getPerformance(app);
 // const database = getDatabase(app);
 // const remoteConfig = getRemoteConfig(app);
-// const appCheck = initializeAppCheck(app, new ReCaptchaV3Provider('public-recaptcha-key'));
+const appCheck = initializeAppCheck(app, {
+  provider: new ReCaptchaV3Provider('6LdmDCAqAAAAAFcbeiyz0jXUt1SnYtTKl8PG_m4r'),
+  isTokenAutoRefreshEnabled: true
+});
 
-export { app, analytics, auth, db };
+export { app, analytics, auth, db, appCheck };
