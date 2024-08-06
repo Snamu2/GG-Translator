@@ -36,10 +36,11 @@ app.use(
       directives: {
         "default-src": ["'self'"],
         "connect-src": ["'self'", "https://*.googleapis.com", "https://www.google-analytics.com"],
-        "script-src": ["'self'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com", "https://cdn.socket.io", "https://www.gstatic.com", "https://www.googletagmanager.com", (req, res) => `'nonce-${res.locals.nonce}'`],
+        "script-src": ["'self'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com", "https://cdn.socket.io", "https://www.gstatic.com", "https://www.googletagmanager.com", "https://www.google.com", (req, res) => `'nonce-${res.locals.nonce}'`],
         "style-src": ["'self'", "https://cdn.jsdelivr.net", "https://fonts.googleapis.com", (req, res) => `'nonce-${res.locals.nonce}'`],
         "font-src": ["'self'", "https://fonts.gstatic.com"],
         "img-src": ["'self'", "https://cdn.jsdelivr.net", "https://www.googletagmanager.com"],
+        "frame-src": ["'self'", "https://www.google.com"],
       },
     },
   })
