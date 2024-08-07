@@ -8,6 +8,7 @@ const helmet = require('helmet');
 const { v4: uuidv4 } = require('uuid');
 const OpenAI = require('openai');
 const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { TextToSpeechClient } = require('@google-cloud/text-to-speech');
 const admin = require('firebase-admin');
 // const { MongoClient, ObjectId } = require('mongodb');
 const methodOverride = require('method-override')
@@ -43,6 +44,7 @@ app.use(
         "style-src": ["'self'", "https://cdn.jsdelivr.net", "https://fonts.googleapis.com", (req, res) => `'nonce-${res.locals.nonce}'`],
         "font-src": ["'self'", "https://fonts.gstatic.com"],
         "img-src": ["'self'", "https://cdn.jsdelivr.net", "https://www.googletagmanager.com"],
+        "media-src": ["'self'", 'blob:'],
         "frame-src": ["'self'", "https://www.google.com"],
       },
     },
@@ -635,7 +637,7 @@ app.post('/', authenticateUser, async (req, res) => {
             }
           ],
           generationConfig: {
-            maxOutputTokens: 256,
+            maxOutputTokens: 512,
             temperature: 0.7,
           },
         }).then(async (result) => {
@@ -740,6 +742,57 @@ io.on('connection', (socket) => {
     // 이벤트 리스너 제거
     global.ee.removeListener('newTranslation', sendNewTranslation);
   });
+});
+
+// TTS Text-to-Speech
+const ttsClient = new TextToSpeechClient();
+
+// 언어별 음성 타입 매핑
+const voiceTypeMap = {
+  'en-US': 'en-US-Journey-F',
+  'ko-KR': 'ko-KR-Neural2-C',
+  'ja-JP': 'ja-JP-Neural2-B',
+  'zh-CN': 'cmn-CN-Wavenet-D',
+  'zh-TW': 'cmn-TW-Wavenet-A',
+  'vi-VN': 'vi-VN-Wavenet-A',
+  'id-ID': 'id-ID-Wavenet-D',
+  'th-TH': 'th-TH-Neural2-C',
+  'de-DE': 'de-DE-Neural2-B',
+  'ru-RU': 'ru-RU-Wavenet-D',
+  'es-ES': 'es-ES-Neural2-F',
+  'it-IT': 'it-IT-Neural2-A',
+  'fr-FR': 'fr-FR-Neural2-A',
+  'hi-IN': 'hi-IN-Neural2-B',
+  'ar-XA': 'ar-XA-Wavenet-B',
+  'pt-PT': 'pt-PT-Wavenet-C',
+  'tr-TR': 'tr-TR-Wavenet-B'
+};
+
+app.post('/api/tts', authenticateUser, async (req, res) => {
+  try {
+    const { text, languageCode } = req.body;
+
+    const voiceName = voiceTypeMap[languageCode] || voiceTypeMap['en-US'];
+    
+    const request = {
+      input: { text },
+      voice: { languageCode, name: voiceName },
+      audioConfig: { 
+        audioEncoding: 'LINEAR16',
+        effectsProfileId: ['small-bluetooth-speaker-class-device'],
+        pitch: 0,
+        speakingRate: 1
+      },
+    };
+
+    const [response] = await ttsClient.synthesizeSpeech(request);
+    
+    res.set('Content-Type', 'audio/wav');
+    res.send(response.audioContent);
+  } catch (error) {
+    console.error('Error in TTS:', error);
+    res.status(500).json({ error: 'Failed to synthesize speech' });
+  }
 });
 
 

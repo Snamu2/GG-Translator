@@ -132,3 +132,98 @@ const updateTranslation = (AIResult) => {
 document.querySelector('#refresh').addEventListener('click', () => {
   refreshTranslation()
 })
+
+let isPlaying = false;
+let currentAudio = null;
+
+document.querySelectorAll('.language-section').forEach(section => {
+  const ttsButton = section.querySelector('.tts-button');
+  
+  ttsButton.addEventListener('click', async () => {
+    if (isPlaying) {
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+      }
+      isPlaying = false;
+      enableAllTtsButtons();
+      return;
+    }
+
+    const textToSpeak = section.querySelector('p').innerText;
+    const languageCode = mapLanguageCode(section.id);
+
+    currentUser.getIdToken().then(async token => {
+      try {
+        disableAllTtsButtons();
+        isPlaying = true;
+
+        const response = await fetch('/api/tts', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({ text: textToSpeak, languageCode })
+        });
+  
+        if (!response.ok) {
+          throw new Error('TTS request failed');
+        }
+  
+        const audioBlob = await response.blob();
+        const audioUrl = URL.createObjectURL(audioBlob);
+        currentAudio = new Audio(audioUrl);
+
+        currentAudio.addEventListener('ended', () => {
+          isPlaying = false;
+          enableAllTtsButtons();
+        });
+
+        currentAudio.play();
+      } catch (error) {
+        console.error('Error playing TTS:', error);
+        alert('Failed to play TTS. Please try again.');
+        isPlaying = false;
+        enableAllTtsButtons();
+      }
+    });
+  });
+
+  function disableAllTtsButtons() {
+    document.querySelectorAll('.tts-button').forEach(button => {
+      button.disabled = true;
+      button.classList.add('disabled');
+    });
+  }
+
+  function enableAllTtsButtons() {
+    document.querySelectorAll('.tts-button').forEach(button => {
+      button.disabled = false;
+      button.classList.remove('disabled');
+    });
+  }
+
+  function mapLanguageCode(code) {
+    const mapping = {
+      'kor': 'ko-KR',
+      'eng': 'en-US',
+      'jpn': 'ja-JP',
+      'chs': 'zh-CN',
+      'cht': 'zh-TW',
+      'vie': 'vi-VN',
+      'ind': 'id-ID',
+      'tha': 'th-TH',
+      'deu': 'de-DE',
+      'rus': 'ru-RU',
+      'spa': 'es-ES',
+      'ita': 'it-IT',
+      'fra': 'fr-FR',
+      'hin': 'hi-IN',
+      'ara': 'ar-XA',
+      'por': 'pt-PT',
+      'tur': 'tr-TR'
+    };
+    return mapping[code] || 'en-US';
+  }
+});

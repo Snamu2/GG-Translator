@@ -139,7 +139,6 @@ window.onload = function() {
 
 document.querySelectorAll('.language-section').forEach(section => {
   const copyButton = section.querySelector('.copy-button');
-  const ttsButton = section.querySelector('.tts-button');
 
   copyButton.addEventListener('click', () => {
     const textToCopy = section.querySelector('p').innerText;
@@ -156,11 +155,5 @@ document.querySelectorAll('.language-section').forEach(section => {
       .catch(err => {
         console.error('Failed to copy text.', err);
       });
-  });
-
-  ttsButton.addEventListener('click', () => {
-    const textToSpeak = section.querySelector('p').innerText;
-    const speech = new SpeechSynthesisUtterance(textToSpeak);
-    speechSynthesis.speak(speech);
   });
 });

@@ -159,6 +159,13 @@ p {
   align-items: center;
   justify-content: center;
 }
+.tts-button.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.tts-button:not(.disabled):hover {
+  background-color: #f0f0f0;
+}
 
 .check-icon-container {
   position: absolute;
