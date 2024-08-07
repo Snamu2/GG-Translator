@@ -134,7 +134,9 @@ document.querySelector('#login-form').addEventListener('submit', (event) => {
 
       await saveUserInfo(user.uid, user.email);
 
-      window.location.replace('/');
+      setTimeout(() => {
+        window.location.replace('/');
+      }, 1500); // 1.5초 지연
     })
     .catch((error) => {
       console.error('Error:', error.code, error.message);
@@ -166,9 +168,11 @@ document.querySelector('#signup-form').addEventListener('submit', (event) => {
       showConfirmation(signupForm)
 
       await saveUserInfo(user.uid, user.email);
-    
+
       alert("Signed Up!");
-      window.location.replace('/authentication');
+      setTimeout(() => {
+        window.location.replace('/');
+      }, 1500); // 1.5초 지연
     })
     .catch((error) => {
       console.error('Error:', error.code, error.message);
