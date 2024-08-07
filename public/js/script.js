@@ -1,17 +1,20 @@
-import { analytics, db, auth } from './firebase_init.mjs';
+import { analytics, auth, db } from './firebase_init.mjs';
 import { doc, collection, addDoc, setDoc, getDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
 let currentUser = null;
+let authToken = null;
 
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
   if (user) {
     currentUser = user;
+    authToken = await user.getIdToken();
     console.log('User is signed in:', user.uid);
     document.getElementById('Translate').disabled = false;
     localStorage.setItem('user', JSON.stringify(user))
   } else {
     currentUser = null;
+    authToken = null;
     console.log('No user is signed in.');
     document.getElementById('Translate').disabled = true;
     window.location.replace('/authentication');
@@ -100,7 +103,7 @@ const initURL = `${window.location.origin}${window.location.pathname}`;
 window.history.pushState({ path: initURL }, '', initURL);
 
 async function GGai(param, callback) {
-  if (!currentUser) {
+  if (!currentUser || !authToken) {
     callback('Login is required.');
     return;
   }
@@ -122,6 +125,7 @@ async function GGai(param, callback) {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`,
           },
           body: JSON.stringify({
             param: param

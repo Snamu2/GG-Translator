@@ -15,7 +15,9 @@ document.addEventListener('DOMContentLoaded', () => {
   buttons.forEach(function(button) {
     button.addEventListener('click', () => {
       var language = button.getAttribute('data-language');
-      toggleLanguage(language, button, true);
+      if (language) {
+        toggleLanguage(language, button, true);
+      }
     });
   });
 
@@ -71,7 +73,17 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function toggleLanguage(language, button, saveState) {
+  if (!language || !button) {
+    console.error(`Invalid language or button: ${language}`);
+    return;
+  }
+
   var activeSection = document.getElementById(language);
+  
+  if (!activeSection) {
+    console.error(`Element not found for language: ${language}`);
+    return;
+  }
   
   // 해당 섹션이 이미 활성화된 경우 비활성화
   if (activeSection.classList.contains('active')) {
@@ -124,10 +136,6 @@ document.querySelectorAll('.btn').forEach(button => {
 window.onload = function() {
   gsap.from('.container', {opacity: 0, y: -50, duration: 1});
 }
-
-document.querySelector('#refresh').addEventListener('click', () => {
-  window.location.reload();
-})
 
 document.querySelectorAll('.language-section').forEach(section => {
   const copyButton = section.querySelector('.copy-button');

@@ -15,7 +15,7 @@ const axios = require('axios');
 const qs = require('qs');
 const fs = require('fs');
 const path = require('path');
-var session = require('express-session')
+// var session = require('express-session')
 require('dotenv').config();
 app.use(methodOverride('_method'))
 app.use(express.static(__dirname + '/public'))
@@ -23,6 +23,9 @@ app.set('view engine', 'ejs')
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use(helmet());
+
+const EventEmitter = require('events');
+global.ee = new EventEmitter();
 
 function generateNonce(req, res, next) {
   res.locals.nonce = uuidv4();
@@ -433,24 +436,132 @@ console.log('## 언어설정 완료');
 let selectedModel = 'gemini-1.5-flash-latest';
 
 let translationResults = [];
-let lastSentResults = [];
+// let lastSentResults = [];
 
-// Firebase Firestore에 WebApp의 일반 저장
-async function saveTranslationToFirestore(input, output, model) {
+// 인증 미들웨어
+const authenticateUser = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).json({ error: 'No authorization header' });
+  }
+
+  const token = authHeader.split('Bearer ')[1];
+  if (!token) {
+    return res.status(401).json({ error: 'Invalid authorization header format' });
+  }
+
   try {
-    const docRef = await db.collection('translations').add({
+    const decodedToken = await admin.auth().verifyIdToken(token);
+    req.user = {
+      uid: decodedToken.uid,
+      email: decodedToken.email
+    };
+
+    // 사용자 정보 업데이트
+    const userInfo = {
+      email: decodedToken.email,
+      // displayName: decodedToken.name,
+      // ...
+    };
+    await updateUserInfo(decodedToken.uid, userInfo);
+
+    next();
+  } catch (error) {
+    console.error('Error verifying auth token:', error);
+    res.status(401).json({ error: 'Invalid auth token' });
+  }
+};
+
+// Firebase Firestore에 사용자별 번역 결과 저장
+async function saveTranslationToFirestore(userId, input, output, model) {
+  if (!userId) {
+    console.error("User ID is missing");
+    throw new Error("User ID is required");
+  }
+
+  try {
+    const userDocRef = db.collection('users').doc(userId);
+    const translationsCol = userDocRef.collection('translations');
+    const docRef = await translationsCol.add({
       input: input,
       output: output,
       model: model,
       timestamp: admin.firestore.FieldValue.serverTimestamp()
     });
-    console.log("Document written with ID:", docRef.id);
+    console.log("Translation saved for user:", userId);
+
+    // 새 번역 결과 저장 시 이벤트 발생
+    global.ee.emit('newTranslation', userId, { input, output, model });
+
+    return docRef.id;
   } catch (error) {
-    console.error("Error adding document: ", error);
+    console.error("Error saving translation: ", error);
+    throw error;
   }
 }
 
-app.post('/', (req, res) => {
+// 사용자별 최신 번역 결과 가져오기 함수
+async function getLatestTranslationForUser(userId) {
+  try {
+    const userDocRef = db.collection('users').doc(userId);
+    const translationsCol = userDocRef.collection('translations');
+    const querySnapshot = await translationsCol
+      .orderBy('timestamp', 'desc')
+      .limit(1)
+      .get();
+    
+    if (!querySnapshot.empty) {
+      return querySnapshot.docs[0].data();
+    }
+    return null;
+  } catch (error) {
+    console.error("Error getting latest translation: ", error);
+    return null;
+  }
+}
+
+async function updateUserInfo(userId, userInfo) {
+  if (!userId) {
+    console.error("User ID is missing");
+    throw new Error("User ID is required");
+  }
+
+  try {
+    const userDocRef = db.collection('users').doc(userId);
+    
+    // 기존 정보와 병합
+    await userDocRef.set({
+      lastLogin: admin.firestore.FieldValue.serverTimestamp(),
+      ...userInfo
+    }, { merge: true });
+
+    console.log("User info updated for user:", userId);
+  } catch (error) {
+    console.error("Error updating user info: ", error);
+    throw error;
+  }
+}
+
+app.post('/api/update-user-info', authenticateUser, async (req, res) => {
+  try {
+    const userId = req.user.uid;
+    const userInfo = {
+      email: req.user.email,
+      // displayName: req.user.displayName,
+      // photoURL: req.user.photoURL,
+      // 필요한 다른 정보들...
+    };
+
+    await updateUserInfo(userId, userInfo);
+    res.status(200).json({ message: "User info updated successfully" });
+  } catch (error) {
+    console.error("Error in update-user-info route:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.post('/', authenticateUser, async (req, res) => {
+    const userId = req.user.uid;
     let param = req.body.param;
     let model = req.query.model;
     // console.log(param);
@@ -527,18 +638,24 @@ app.post('/', (req, res) => {
             maxOutputTokens: 256,
             temperature: 0.7,
           },
-        }).then(result => {
+        }).then(async (result) => {
           const response = result.response;
           const text = response.text();
           // console.log(text);
-          translationResults.push({ input: param, output: text });
-
-          // Firestore에 번역 결과 저장
-          saveTranslationToFirestore(param, text, selectedModel);
-
-          res.json(text);
-          // return res.status(200).json({ success: true });
+          
+          try {
+            // Firestore에 번역 결과 저장
+            await saveTranslationToFirestore(userId, param, text, selectedModel);
+            res.json(text);
+          } catch (error) {
+            console.error("Error in translation process:", error);
+            res.status(500).json({ error: "Internal server error" });
+          }
         })
+        .catch(error => {
+          console.error("Error in Gemini model:", error);
+          res.status(500).json({ error: "Error processing translation" });
+        });
     } else {
         return res.status(400).json({ error: 'Invalid model' });
     }
@@ -553,40 +670,75 @@ app.get('/view_only', (req, res) => {
   }
 });
 
-// 클라이언트에게 번역 결과를 실시간으로 전송
-io.on('connection', (socket) => {
-  console.log('New client connected');
-
-  // 클라이언트 연결 시 이전 결과 전송
-  const sendInitialTranslation = () => {
-    if (translationResults.length > 0) {
-      const output = translationResults[translationResults.length - 1].output || 'Null';
-      socket.emit('translation update', { AIResult: output });
-      lastSentResults = [...translationResults];  // 초기 전송 결과 저장
+// 새로운 라우트: 사용자별 최신 번역 결과 가져오기
+app.get('/api/latest-translation', authenticateUser, async (req, res) => {
+  try {
+    const latestTranslation = await getLatestTranslationForUser(req.user.uid);
+    if (latestTranslation) {
+      res.json(latestTranslation);
+    } else {
+      res.status(404).json({ error: 'No translation found' });
     }
-  };
-  sendInitialTranslation();
-  
-  // 새로운 번역 결과가 있을 때 클라이언트에 전송
-  const sendTranslation = () => {
-    if (translationResults.length > 0 && !arraysEqual(lastSentResults, translationResults)) {
-      const output = translationResults[translationResults.length - 1].output || 'Null';
-      socket.emit('translation update', { AIResult : output });
-      lastSentResults = [...translationResults];  // 전송한 결과 저장
-    }
-  };
+  } catch (error) {
+    console.error('Error fetching latest translation:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
-  // 배열 비교 함수
-  function arraysEqual(arr1, arr2) {
-    return JSON.stringify(arr1) === JSON.stringify(arr2);
+io.use(async (socket, next) => {
+  const token = socket.handshake.auth.token;
+  if (!token) {
+    return next(new Error('Authentication error'));
   }
 
-  // 일정 간격으로 번역 결과 체크
-  const interval = setInterval(sendTranslation, 700);
+  try {
+    const decodedToken = await admin.auth().verifyIdToken(token);
+    socket.user = {
+      uid: decodedToken.uid,
+      email: decodedToken.email
+    };
+    next();
+  } catch (error) {
+    next(new Error('Authentication error'));
+  }
+});
+
+// 클라이언트에게 번역 결과를 실시간으로 전송
+io.on('connection', (socket) => {
+  console.log('New client connected:', socket.user.uid);
+
+  // 최신 번역 결과 전송 함수
+  const sendLatestTranslation = async () => {
+    try {
+      const latestTranslation = await getLatestTranslationForUser(socket.user.uid);
+      if (latestTranslation) {
+        socket.emit('translation update', { AIResult: latestTranslation.output });
+      }
+    } catch (error) {
+      console.error('Error sending translation:', error);
+    }
+  };
+
+  // 연결 시 자동으로 최신 번역 전송
+  sendLatestTranslation();
+
+  // 클라이언트 요청 시 최신 번역 전송
+  socket.on('requestLatestTranslation', sendLatestTranslation);
+
+  // 새로운 번역 결과 전송 함수
+  const sendNewTranslation = (userId, translationResult) => {
+    if (socket.user.uid === userId) {
+      socket.emit('translation update', { AIResult: translationResult.output });
+    }
+  };
+
+  // 전역 이벤트 리스너 등록
+  global.ee.on('newTranslation', sendNewTranslation);
 
   socket.on('disconnect', () => {
-    clearInterval(interval);
-    console.log('Client disconnected');
+    console.log('Client disconnected:', socket.user.uid);
+    // 이벤트 리스너 제거
+    global.ee.removeListener('newTranslation', sendNewTranslation);
   });
 });
 
