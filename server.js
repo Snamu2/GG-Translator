@@ -811,7 +811,7 @@ const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
 const REDIRECT_URI = 'http://localhost:3000/app/discord/GGT';
-// const REDIRECT_URI = 'https://ggglobaltrans.com/app/discord/GGT';
+// const REDIRECT_URI = 'https://snamu2.com/app/discord/GGT';
 
 // Discord OAuth2 인증 라우트
 app.get('/auth/discord/app', (req, res) => {
