@@ -1,3 +1,4 @@
+// ToDo IN SSH => Disable dotenv, Change discord callback redirect URL
 const express = require('express')
 const http = require('http');
 const socketIo = require('socket.io');
@@ -20,6 +21,7 @@ const path = require('path');
 require('dotenv').config();
 app.use(methodOverride('_method'))
 app.use(express.static(__dirname + '/public'))
+app.use('/dictionary', express.static(path.join(__dirname, 'client/build')));
 app.set('view engine', 'ejs')
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
@@ -794,6 +796,158 @@ app.post('/api/tts', authenticateUser, async (req, res) => {
     res.status(500).json({ error: 'Failed to synthesize speech' });
   }
 });
+
+//
+// React GG Dictionary
+app.get('/dictionary', (req, res) => {
+  res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+});
+
+// Firestore For Cache
+const dictionaryCache = db.collection('dictionary_cache');
+
+// Dictionary API Endpoint
+app.post('/api/dictionary', authenticateUser, async (req, res) => {
+  const { word } = req.body;
+  const userId = req.user.uid;
+
+  try {
+    const userLanguage = await getUserLanguagePreference(userId);
+
+    // Checking in Cache
+    const cachedResult = await getCachedDefinition(word, userLanguage);
+    if (cachedResult) {
+      await addToSearchHistory(userId, word, cachedResult.definitions, userLanguage);
+      return res.json(cachedResult);
+    }
+
+    // Gemini: def & ex
+    const definitions = await getDefinitionsFromGemini(word, userLanguage);
+
+    // Caching the result
+    await cacheDefinition(word, definitions, userLanguage);
+
+    // Adding in user's search history
+    await addToSearchHistory(userId, word, definitions, userLanguage);
+
+    res.json({ definitions });
+  } catch (error) {
+    console.error('Dictionary API error:', error);
+    res.status(500).json({ error: 'Failed to fetch definition' });
+  }
+});
+
+async function getCachedDefinition(word, language) {
+  const cacheDoc = await dictionaryCache.doc(`${word.toLowerCase()}_${language}`).get();
+  if (cacheDoc.exists) {
+    return cacheDoc.data();
+  }
+  return null;
+}
+
+async function cacheDefinition(word, definitions, language) {
+  await dictionaryCache.doc(`${word.toLowerCase()}_${language}`).set({
+    definitions,
+    language,
+    timestamp: admin.firestore.FieldValue.serverTimestamp()
+  });
+}
+
+async function addToSearchHistory(userId, word, definitions, requestLanguage) {
+  try {
+    await db.collection('users').doc(userId).collection('search_history').add({
+      word,
+      definitions,
+      requestLanguage,
+      timestamp: admin.firestore.FieldValue.serverTimestamp()
+    });
+    console.log(`Search history added for user ${userId}: ${word} in ${requestLanguage}`);
+  } catch (error) {
+    console.error('Error adding to search history:', error);
+  }
+}
+
+async function getDefinitionsFromGemini(word, language) {
+  const modelName = 'gemini-1.5-flash-latest';
+  const model = genAI.getGenerativeModel({
+    model: modelName,
+    systemInstruction: `Define the word "${word}" in ${language} and provide multiple meanings if applicable. For each definition, include a short example sentence. Format the response as a JSON array of objects, each containing 'definition' and 'example' keys.`,
+  });
+
+  try {
+    const result = await model.generateContent({
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            {
+              text: word,
+            }
+          ],
+        }
+      ],
+      generationConfig: {
+        maxOutputTokens: 516,
+        temperature: 0.7,
+      },
+    });
+
+    const response = result.response;
+    let rawContent = response.text();
+
+    // JSON 부분만 추출
+    const jsonMatch = rawContent.match(/```json\s*([\s\S]*?)\s*```/);
+    if (jsonMatch) {
+      rawContent = jsonMatch[1];
+    }
+    
+    // JSON 파싱 시도
+    let definitions;
+    try {
+      definitions = JSON.parse(rawContent);
+    } catch (parseError) {
+      console.error('Failed to parse JSON:', parseError);
+      // 파싱 실패 시 텍스트를 단순 객체로 변환
+      definitions = [{ definition: rawContent, example: 'No example available' }];
+    }
+
+    // 결과 정제
+    return definitions.map((def, index) => ({
+      id: `${word}_${index}`,
+      word,
+      definition: def.definition || 'No definition available',
+      example: def.example || 'No example available'
+    }));
+  } catch (e) {
+    console.error('❌ Error generating content:', e.response?.candidates[0] || e);
+    throw e.response?.candidates[0]?.finishReason || 'Error fetching definitions';
+  }
+}
+
+// 사용자 언어 설정 저장
+app.post('/api/user/language-preference', authenticateUser, async (req, res) => {
+  const { language } = req.body;
+  const userId = req.user.uid;
+
+  try {
+    await db.collection('users').doc(userId).set({
+      preferredLanguage: language
+    }, { merge: true });
+    res.json({ message: 'Language preference updated successfully' });
+  } catch (error) {
+    console.error('Error updating language preference:', error);
+    res.status(500).json({ error: 'Failed to update language preference' });
+  }
+});
+
+// 사용자 언어 설정 가져오기
+async function getUserLanguagePreference(userId) {
+  const userDoc = await db.collection('users').doc(userId).get();
+  if (userDoc.exists) {
+    return userDoc.data().preferredLanguage || 'en'; // 기본값은 영어
+  }
+  return 'en';
+}
 
 
 //

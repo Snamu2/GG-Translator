@@ -1,11 +1,6 @@
-captcha
-
-more *firebase*
-
 tagmanager
 
 
-hovering tool tip text
 mic
 캡쳐 이미지 로컬 번역
 
@@ -15,7 +10,6 @@ mic
 ~~음성 받아쓰기
 겹치는 음성 받아쓰기~~ (권한이슈)
 
-modal
 
 # ToDo
 

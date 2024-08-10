@@ -1,10 +1,14 @@
 {
   "name": "gg-translator",
   "version": "1.0.0",
-  "description": "Multi-Translation (Experimental Version)",
+  "description": "Multi-Translation (Experimental Version) Supported by the world's top companies, featuring the strongest global communication capabilities. Translation & Dictionary WebApp && DiscordApp",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "heroku-postbuild": "cd client && npm install && npm run build",
+    "client": "cd client && npm start",
+    "dev-full": "concurrently \"npm run dev\" \"npm run client\""
   },
   "author": "Snamu",
   "license": "ISC",
@@ -25,5 +29,9 @@
     "qs": "^6.12.3",
     "socket.io": "^4.7.5",
     "uuid": "^10.0.0"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "nodemon": "^3.1.4"
   }
 }
