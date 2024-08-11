@@ -859,6 +859,7 @@ async function addToSearchHistory(userId, word, definitions, requestLanguage) {
       word,
       definitions,
       requestLanguage,
+      isHidden: false,
       timestamp: admin.firestore.FieldValue.serverTimestamp()
     });
     console.log(`Search history added for user ${userId}: ${word} in ${requestLanguage}`);
@@ -867,11 +868,39 @@ async function addToSearchHistory(userId, word, definitions, requestLanguage) {
   }
 }
 
+app.post('/api/clear-search-history', authenticateUser, async (req, res) => {
+  const userId = req.user.uid;
+  try {
+    // 사용자의 검색 기록에 'isHidden' 필드를 true로 설정
+    const historyRef = db.collection('users').doc(userId).collection('search_history');
+    const batch = db.batch();
+    const snapshot = await historyRef.get();
+    snapshot.docs.forEach((doc) => {
+      batch.update(doc.ref, { isHidden: true });
+    });
+    await batch.commit();
+    res.json({ message: 'Search history hidden successfully' });
+  } catch (error) {
+    console.error('Error hiding search history:', error);
+    res.status(500).json({ error: 'Failed to hide search history' });
+  }
+});
+
 async function getDefinitionsFromGemini(word, language) {
   const modelName = 'gemini-1.5-flash-latest';
   const model = genAI.getGenerativeModel({
     model: modelName,
-    systemInstruction: `Define the word "${word}" in ${language} and provide multiple meanings if applicable. For each definition, include a short example sentence. Format the response as a JSON array of objects, each containing 'definition' and 'example' keys.`,
+    systemInstruction: `Define the word "${word}" in ${language} and provide multiple meanings if applicable. For each definition, include a short example sentence. Format the response STRICTLY as a JSON array of objects, each containing 'definition' and 'example' keys. DO NOT include any additional text or explanations outside of the JSON structure. The response should be a valid JSON that can be parsed without any modifications. Example format:
+  [
+    {
+      "definition": "First definition here",
+      "example": "Example sentence for the first definition"
+    },
+    {
+      "definition": "Second definition here (if applicable)",
+      "example": "Example sentence for the second definition"
+    }
+  ]`,
   });
 
   try {
@@ -893,22 +922,26 @@ async function getDefinitionsFromGemini(word, language) {
     });
 
     const response = result.response;
-    let rawContent = response.text();
+    let rawContent = response.text().trim();
 
-    // JSON 부분만 추출
-    const jsonMatch = rawContent.match(/```json\s*([\s\S]*?)\s*```/);
-    if (jsonMatch) {
-      rawContent = jsonMatch[1];
-    }
-    
     // JSON 파싱 시도
     let definitions;
     try {
       definitions = JSON.parse(rawContent);
     } catch (parseError) {
       console.error('Failed to parse JSON:', parseError);
-      // 파싱 실패 시 텍스트를 단순 객체로 변환
-      definitions = [{ definition: rawContent, example: 'No example available' }];
+      console.error('Raw content:', rawContent);
+      
+      // JSON 파싱 실패 시 텍스트를 단순 객체로 변환
+      definitions = [{
+        definition: "Unable to parse the response. Please try again.",
+        example: "No example available"
+      }];
+    }
+
+    // 결과가 배열이 아닌 경우 처리
+    if (!Array.isArray(definitions)) {
+      definitions = [definitions];
     }
 
     // 결과 정제

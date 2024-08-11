@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence, useSpring } from 'framer-motion';
 import { onAuthStateChanged } from "firebase/auth";
-import { collection, addDoc, query, where, limit, getDocs, doc, setDoc, deleteDoc, orderBy } from "firebase/firestore";
+import { collection, addDoc, query, where, limit, getDocs, doc, setDoc, deleteDoc, orderBy, updateDoc } from "firebase/firestore";
 import { analytics, auth, db, appCheck } from '../services/firebase_init.mjs';
 import { 
   TextField, Button, Card, CardContent, Typography, Modal, 
   Box, CircularProgress, Snackbar, Alert, Container, Grid,
   Paper, IconButton, Tooltip, ThemeProvider, createTheme,
   List, ListItem, ListItemText, Tabs, Tab, AppBar, Toolbar,
-  Select, MenuItem, ListItemIcon, Switch, Slider, useMediaQuery
+  Select, MenuItem, ListItemIcon, Switch, Slider, useMediaQuery,
+  ListItemButton
 } from '@mui/material';
 import AnimatedNavigation from './AnimatedNavigation';
 import Logo3D from './Logo3D';
@@ -18,6 +19,8 @@ import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
 import BookmarkIcon from '@mui/icons-material/Bookmark';
 import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 import HistoryIcon from '@mui/icons-material/History';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import DeleteIcon from '@mui/icons-material/Delete';
 import ClearAllIcon from '@mui/icons-material/ClearAll';
 import LanguageIcon from '@mui/icons-material/Language';
 import MicIcon from '@mui/icons-material/Mic';
@@ -25,6 +28,8 @@ import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import AccessibilityNewIcon from '@mui/icons-material/AccessibilityNew';
 import { FaFlag } from 'react-icons/fa';
+import { formatRelative, format, parseISO } from 'date-fns';
+import { enUS, es, fr, de, it, pt, ru, zhCN, ja, ko, ar, hi } from 'date-fns/locale';
 
 const NeumorphicBox = styled(Box)(({ theme }) => ({
   borderRadius: 15,
@@ -63,6 +68,20 @@ const LANGUAGES = [
   { code: 'ar', ttsCode: 'ar-XA', name: 'العربية', icon: '🇸🇦' },
   { code: 'hi', ttsCode: 'hi-IN', name: 'हिन्दी', icon: '🇮🇳' },
 ];
+const locales = {
+  en: enUS,
+  es: es,
+  fr: fr,
+  de: de,
+  it: it,
+  pt: pt,
+  ru: ru,
+  zh: zhCN,
+  ja: ja,
+  ko: ko,
+  ar: ar,
+  hi: hi,
+};
 
 const Dictionary = () => {
   const [word, setWord] = useState('');
@@ -71,11 +90,19 @@ const Dictionary = () => {
   const [user, setUser] = useState(null);
   const [selectedDefinition, setSelectedDefinition] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
-  const [bookmarks, setBookmarks] = useState({});
+  const [bookmarks, setBookmarks] = useState(() => {
+    const cachedBookmarks = localStorage.getItem('bookmarks');
+    return cachedBookmarks ? JSON.parse(cachedBookmarks) : {};
+  });
   const [error, setError] = useState('');
   const [tabValue, setTabValue] = useState(0);
-  const [searchHistory, setSearchHistory] = useState([]);
-  const [selectedLanguage, setSelectedLanguage] = useState('en');
+  const [searchHistory, setSearchHistory] = useState(() => {
+    const cachedHistory = localStorage.getItem('searchHistory');
+    return cachedHistory ? JSON.parse(cachedHistory) : [];
+  });
+  const [selectedLanguage, setSelectedLanguage] = useState(() => {
+    return localStorage.getItem('selectedLanguage') || 'en';
+  });
   const [darkMode, setDarkMode] = useState(false);
   const [fontSizeScaling, setFontSizeScaling] = useState(1);
   const [highContrastMode, setHighContrastMode] = useState(false);
@@ -128,7 +155,25 @@ const Dictionary = () => {
     return () => unsubscribe();
   }, []);
 
+  useEffect(() => {
+    localStorage.setItem('selectedLanguage', selectedLanguage);
+  }, [selectedLanguage]);
+
+  useEffect(() => {
+    localStorage.setItem('searchHistory', JSON.stringify(searchHistory));
+  }, [searchHistory]);
+
+  useEffect(() => {
+    localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
+  }, [bookmarks]);
+
   const loadBookmarks = async (userId) => {
+    const cachedBookmarks = localStorage.getItem('bookmarks');
+    if (cachedBookmarks) {
+      setBookmarks(JSON.parse(cachedBookmarks));
+      return;
+    }
+
     try {
       const bookmarksRef = collection(db, 'users', userId, 'bookmarks');
       const bookmarksSnapshot = await getDocs(bookmarksRef);
@@ -137,6 +182,7 @@ const Dictionary = () => {
         bookmarksData[doc.id] = doc.data();
       });
       setBookmarks(bookmarksData);
+      localStorage.setItem('bookmarks', JSON.stringify(bookmarksData));
     } catch (error) {
       console.error('Error loading bookmarks:', error);
       setSnackbar({ open: true, message: 'Error loading bookmarks', severity: 'error' });
@@ -144,19 +190,40 @@ const Dictionary = () => {
   };
 
   const loadSearchHistory = async (userId) => {
+    const cachedHistory = localStorage.getItem('searchHistory');
+    if (cachedHistory) {
+      setSearchHistory(JSON.parse(cachedHistory));
+      return;
+    }
+
     try {
       const historyRef = collection(db, 'users', userId, 'search_history');
-      const historyQuery = query(historyRef, orderBy('timestamp', 'desc'), limit(10));
+      const historyQuery = query(
+        historyRef, 
+        where('isHidden', '==', false),
+        orderBy('timestamp', 'desc'), 
+        limit(10)
+      );
       const historySnapshot = await getDocs(historyQuery);
       const historyData = historySnapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
+        timestamp: doc.data().timestamp?.toDate().toISOString() // Firestore Timestamp를 ISO 문자열로 변환
       }));
       setSearchHistory(historyData);
+      localStorage.setItem('searchHistory', JSON.stringify(historyData));
     } catch (error) {
       console.error('Error loading search history:', error);
       setSnackbar({ open: true, message: 'Error loading search history', severity: 'error' });
     }
+  };
+
+  const updateSearchHistory = (newSearch) => {
+    setSearchHistory(prevHistory => {
+      const updatedHistory = [newSearch, ...prevHistory.filter(item => item.word !== newSearch.word)].slice(0, 10);
+      localStorage.setItem('searchHistory', JSON.stringify(updatedHistory));
+      return updatedHistory;
+    });
   };
 
   const updateLanguagePreference = async (language) => {
@@ -166,6 +233,7 @@ const Dictionary = () => {
       return;
     }
 
+    setSelectedLanguage(language);
     setIsLoading(true);
 
     try {
@@ -214,6 +282,13 @@ const Dictionary = () => {
 
       const data = await response.json();
       setDefinitions(data.definitions);
+      
+      updateSearchHistory({
+        word: searchTerm,
+        timestamp: new Date(),
+        requestLanguage: selectedLanguage
+      });
+      
       setSnackbar({ open: true, message: 'Word found', severity: 'success' });
     } catch (error) {
       console.error('Error:', error);
@@ -233,12 +308,17 @@ const Dictionary = () => {
         setBookmarks(prev => {
           const newBookmarks = {...prev};
           delete newBookmarks[definition.id];
+          localStorage.setItem('bookmarks', JSON.stringify(newBookmarks));
           return newBookmarks;
         });
         setSnackbar({ open: true, message: 'Bookmark removed', severity: 'success' });
       } else {
         await setDoc(bookmarkRef, definition);
-        setBookmarks(prev => ({...prev, [definition.id]: definition}));
+        setBookmarks(prev => {
+          const newBookmarks = {...prev, [definition.id]: definition};
+          localStorage.setItem('bookmarks', JSON.stringify(newBookmarks));
+          return newBookmarks;
+        });
         setSnackbar({ open: true, message: 'Bookmark added', severity: 'success' });
       }
     } catch (error) {
@@ -294,13 +374,40 @@ const Dictionary = () => {
     setTabValue(newValue);
   };
 
+  const hideHistoryItem = async (itemId) => {
+    try {
+      await updateDoc(doc(db, 'users', user.uid, 'search_history', itemId), {
+        isHidden: true
+      });
+  
+      // 로컬 상태 및 캐시 업데이트
+      setSearchHistory(prevHistory => {
+        const updatedHistory = prevHistory.filter(item => item.id !== itemId);
+        localStorage.setItem('searchHistory', JSON.stringify(updatedHistory));
+        return updatedHistory;
+      });
+  
+      setSnackbar({ open: true, message: 'History item hidden', severity: 'success' });
+    } catch (error) {
+      console.error('Error hiding history item:', error);
+      setSnackbar({ open: true, message: 'Error hiding history item', severity: 'error' });
+    }
+  };
+
   const clearSearchHistory = async () => {
     try {
-      const historyRef = collection(db, `users/${user.uid}/search_history`);
-      const historySnapshot = await getDocs(historyRef);
-      const deletePromises = historySnapshot.docs.map(doc => deleteDoc(doc.ref));
-      await Promise.all(deletePromises);
+      const response = await fetch('/api/clear-search-history', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${await user.getIdToken()}`
+        }
+      });
+      if (!response.ok) {
+        throw new Error('Failed to clear search history');
+      }
       setSearchHistory([]);
+      localStorage.removeItem('searchHistory');
       setSnackbar({ open: true, message: 'Search history cleared', severity: 'success' });
     } catch (error) {
       console.error('Error clearing search history:', error);
@@ -311,6 +418,9 @@ const Dictionary = () => {
   const handleLogout = async () => {
     try {
       await auth.signOut();
+      localStorage.removeItem('selectedLanguage');
+      localStorage.removeItem('searchHistory');
+      localStorage.removeItem('bookmarks');
       setSnackbar({ open: true, message: 'Logged out successfully', severity: 'success' });
     } catch (error) {
       console.error('Error logging out:', error);
@@ -432,11 +542,12 @@ const Dictionary = () => {
                   value={selectedLanguage}
                   onChange={(e) => updateLanguagePreference(e.target.value)}
                   sx={{ minWidth: 120 }}
+                  startAdornment={<LanguageIcon sx={{ mr: 1 }} />}
                 >
                   {LANGUAGES.map((lang) => (
                     <MenuItem key={lang.code} value={lang.code}>
                       <ListItemIcon>
-                        <span role="img" aria-label={lang.name}>{lang.icon}</span>
+                        <FaFlag className={`flag-icon flag-icon-${lang.icon.slice(-2).toLowerCase()}`} />
                       </ListItemIcon>
                       <ListItemText>{lang.name}</ListItemText>
                     </MenuItem>
@@ -458,10 +569,10 @@ const Dictionary = () => {
           {error && <Typography color="error" sx={{ mt: 2 }}>{error}</Typography>}
           <Box sx={{ mt: 4 }}>
             <Tabs value={tabValue} onChange={handleTabChange} centered>
-              <Tab label="Definitions" />
-              <Tab label="Bookmarks" />
-              <Tab label="History" />
-              <Tab label="AI Recommendations" />
+              <Tab label="Definitions" icon={<SearchIcon />} iconPosition="start" />
+              <Tab label="Bookmarks" icon={<BookmarkIcon />} iconPosition="start" />
+              <Tab label="History" icon={<HistoryIcon />} iconPosition="start" />
+              <Tab label="AI Recommendations" icon={<AutoAwesomeIcon />} iconPosition="start" />
             </Tabs>
           </Box>
           <AnimatePresence>
@@ -534,11 +645,35 @@ const Dictionary = () => {
                 transition={{ duration: 0.3 }}
               >
                 <List>
-                  {searchHistory.map((item, index) => (
-                    <ListItem key={index} button onClick={() => {setWord(item); searchWord(item);}}>
-                      <ListItemText primary={item} />
-                    </ListItem>
-                  ))}
+                {searchHistory.map((item, index) => (
+                  <ListItemButton 
+                    key={index} 
+                    onClick={() => {setWord(item.word); searchWord(item.word);}}
+                  >
+                    <ListItemIcon>
+                      <FaFlag className={`flag-icon flag-icon-${LANGUAGES.find(lang => lang.code === item.requestLanguage)?.icon.slice(-2).toLowerCase() || 'globe'}`} />
+                    </ListItemIcon>
+                    <ListItemText 
+                      primary={item.word}
+                      secondary={`Searched in ${LANGUAGES.find(lang => lang.code === item.requestLanguage)?.name || 'Unknown language'}`}
+                    />
+                    <Tooltip title={format(parseISO(item.timestamp), 'PPpp', { locale: locales[selectedLanguage] || locales.en })}>
+                      <Typography variant="caption">
+                        {formatRelative(parseISO(item.timestamp), new Date(), { locale: locales[selectedLanguage] || locales.en })}
+                      </Typography>
+                    </Tooltip>
+                    <IconButton 
+                      edge="end" 
+                      aria-label="delete" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        hideHistoryItem(item.id);
+                      }}
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </ListItemButton>
+                ))}
                 </List>
                 {searchHistory.length > 0 && (
                   <Button
@@ -546,7 +681,7 @@ const Dictionary = () => {
                     onClick={clearSearchHistory}
                     sx={{ mt: 2 }}
                   >
-                    Clear History
+                    Clear All History
                   </Button>
                 )}
               </motion.div>
