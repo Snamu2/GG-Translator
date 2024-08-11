@@ -113,6 +113,7 @@ const Dictionary = () => {
   const [currentAudio, setCurrentAudio] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [userPreferences, setUserPreferences] = useState(null);
+  const [isSpeechRecognitionSupported, setIsSpeechRecognitionSupported] = useState(false);
 
   const theme = createTheme({
     palette: {
@@ -192,6 +193,10 @@ const Dictionary = () => {
         localStorage.removeItem('searchHistory');
       }
     }
+  }, []);
+
+  useEffect(() => {
+    setIsSpeechRecognitionSupported('webkitSpeechRecognition' in window);
   }, []);
 
   const loadUserPreferences = async (userId) => {
@@ -449,18 +454,40 @@ const Dictionary = () => {
   };
 
   const detectLanguage = (text) => {
-    // 간단한 언어 감지 로직
     const langPatterns = {
-      en: /^[a-zA-Z\s]+$/,
-      ko: /^[ㄱ-ㅎㅏ-ㅣ가-힣\s]+$/,
-      ja: /^[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\s]+$/,
-      zh: /^[\u4e00-\u9fff\s]+$/,
+      en: /^[a-zA-Z\s]+$/,  // 영어
+      ko: /^[ㄱ-ㅎㅏ-ㅣ가-힣\s]+$/,  // 한국어
+      ja: /^[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\s]+$/,  // 일본어
+      zh: /^[\u4e00-\u9fff\s]+$/,  // 중국어
+      es: /^[a-záéíóúüñ\s]+$/i,  // 스페인어
+      fr: /^[a-zàâçéèêëîïôûùüÿœæ\s]+$/i,  // 프랑스어
+      de: /^[a-zäöüß\s]+$/i,  // 독일어
+      it: /^[a-zàèéìíîòóùú\s]+$/i,  // 이탈리아어
+      pt: /^[a-zàáâãçéêíóôõú\s]+$/i,  // 포르투갈어
+      ru: /^[а-яё\s]+$/i,  // 러시아어
+      ar: /^[\u0600-\u06FF\s]+$/,  // 아랍어
+      hi: /^[\u0900-\u097F\s]+$/,  // 힌디어
+      th: /^[\u0E00-\u0E7F\s]+$/,  // 태국어
+      vi: /^[a-zàáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ\s]+$/i,  // 베트남어
     };
   
     for (const [lang, pattern] of Object.entries(langPatterns)) {
-      if (pattern.test(text)) return lang;
+      if (pattern.test(text.trim())) return lang;
     }
-    return null;
+  
+    // 여러 언어가 혼합된 경우나 패턴에 맞지 않는 경우
+    let maxScore = 0;
+    let detectedLang = null;
+  
+    for (const [lang, pattern] of Object.entries(langPatterns)) {
+      const score = (text.match(pattern) || []).length;
+      if (score > maxScore) {
+        maxScore = score;
+        detectedLang = lang;
+      }
+    }
+  
+    return detectedLang || 'unknown';
   };
 
   const handleTabChange = (event, newValue) => {
@@ -564,12 +591,28 @@ const Dictionary = () => {
 
   const startVoiceSearch = () => {
     const recognition = new window.webkitSpeechRecognition();
-    recognition.lang = selectedLanguage;
+    const language = LANGUAGES.find(lang => lang.code === selectedLanguage);
+    recognition.lang = language ? language.ttsCode : 'en-US';
+    
+    recognition.onstart = () => {
+      setSnackbar({ open: true, message: `Listening in ${language ? language.name : 'English'}...`, severity: 'info' });
+    };
+  
     recognition.onresult = (event) => {
       const transcript = event.results[0][0].transcript;
       setWord(transcript);
       searchWord(transcript);
     };
+  
+    recognition.onerror = (event) => {
+      console.error('Speech recognition error', event.error);
+      setSnackbar({ open: true, message: `Error: ${event.error}`, severity: 'error' });
+    };
+  
+    recognition.onend = () => {
+      setSnackbar({ open: true, message: 'Voice search ended', severity: 'info' });
+    };
+  
     recognition.start();
   };
 
@@ -665,9 +708,11 @@ const Dictionary = () => {
                   sx: { borderRadius: theme.shape.borderRadius }
                 }}
               />
-              <IconButton onClick={startVoiceSearch} color="primary">
-                <MicIcon />
-              </IconButton>
+              {isSpeechRecognitionSupported && (
+                <IconButton onClick={startVoiceSearch} color="primary">
+                  <MicIcon />
+                </IconButton>
+              )}
               <Button
                 variant="contained"
                 onClick={() => searchWord()}
