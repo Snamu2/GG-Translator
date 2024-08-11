@@ -45,7 +45,7 @@ app.use(
         "script-src": ["'self'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com", "https://cdn.socket.io", "https://www.gstatic.com", "https://www.googletagmanager.com", "https://www.google.com", (req, res) => `'nonce-${res.locals.nonce}'`],
         "style-src": ["'self'", "https://cdn.jsdelivr.net", "https://fonts.googleapis.com", (req, res) => `'nonce-${res.locals.nonce}'`],
         "font-src": ["'self'", "https://fonts.gstatic.com"],
-        "img-src": ["'self'", "https://cdn.jsdelivr.net", "https://www.googletagmanager.com"],
+        "img-src": ["'self'", "https://cdn.jsdelivr.net", "https://www.googletagmanager.com", "https://flagcdn.com", "data:"],
         "media-src": ["'self'", 'blob:'],
         "frame-src": ["'self'", "https://www.google.com"],
       },
