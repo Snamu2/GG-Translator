@@ -114,6 +114,8 @@ const Dictionary = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [userPreferences, setUserPreferences] = useState(null);
   const [isSpeechRecognitionSupported, setIsSpeechRecognitionSupported] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [recognition, setRecognition] = useState(null);
 
   const theme = createTheme({
     palette: {
@@ -198,6 +200,14 @@ const Dictionary = () => {
   useEffect(() => {
     setIsSpeechRecognitionSupported('webkitSpeechRecognition' in window);
   }, []);
+
+  useEffect(() => {
+    return () => {
+      if (recognition) {
+        recognition.stop();
+      }
+    };
+  }, [recognition]);
 
   const loadUserPreferences = async (userId) => {
     try {
@@ -590,30 +600,47 @@ const Dictionary = () => {
   };
 
   const startVoiceSearch = () => {
-    const recognition = new window.webkitSpeechRecognition();
+    if (isListening) {
+      stopVoiceSearch();
+      return;
+    }
+  
+    const newRecognition = new window.webkitSpeechRecognition();
     const language = LANGUAGES.find(lang => lang.code === selectedLanguage);
-    recognition.lang = language ? language.ttsCode : 'en-US';
+    newRecognition.lang = language ? language.ttsCode : 'en-US';
     
-    recognition.onstart = () => {
+    newRecognition.onstart = () => {
+      setIsListening(true);
       setSnackbar({ open: true, message: `Listening in ${language ? language.name : 'English'}...`, severity: 'info' });
     };
   
-    recognition.onresult = (event) => {
+    newRecognition.onresult = (event) => {
       const transcript = event.results[0][0].transcript;
       setWord(transcript);
       searchWord(transcript);
     };
   
-    recognition.onerror = (event) => {
+    newRecognition.onerror = (event) => {
       console.error('Speech recognition error', event.error);
       setSnackbar({ open: true, message: `Error: ${event.error}`, severity: 'error' });
+      setIsListening(false);
     };
   
-    recognition.onend = () => {
+    newRecognition.onend = () => {
+      setIsListening(false);
       setSnackbar({ open: true, message: 'Voice search ended', severity: 'info' });
     };
   
-    recognition.start();
+    newRecognition.start();
+    setRecognition(newRecognition);
+  };
+  
+  const stopVoiceSearch = () => {
+    if (recognition) {
+      recognition.stop();
+      setIsListening(false);
+      setSnackbar({ open: true, message: 'Voice search stopped', severity: 'info' });
+    }
   };
 
   const fetchAiRecommendations = async (userId) => {
@@ -709,7 +736,11 @@ const Dictionary = () => {
                 }}
               />
               {isSpeechRecognitionSupported && (
-                <IconButton onClick={startVoiceSearch} color="primary">
+                <IconButton 
+                  onClick={startVoiceSearch} 
+                  color={isListening ? "secondary" : "primary"}
+                  aria-label={isListening ? "Stop voice search" : "Start voice search"}
+                >
                   <MicIcon />
                 </IconButton>
               )}
